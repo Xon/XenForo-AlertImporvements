@@ -30,7 +30,7 @@ class SV_AlertImprovements_XenForo_ControllerPublic_Thread extends XFCP_SV_Alert
                 {
                     $db->query("
                         update xf_user
-                        set alerts_unread = alerts_unread - ?
+                        set alerts_unread = GREATEST(0, cast(alerts_unread as signed) - ?)
                         where user_id = ?
                     ", array($rowsAffected, $userId));
 
