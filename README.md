@@ -8,4 +8,4 @@ Features:
 #Performance impact
 
 - 1 extra query per thread page request when the user has more than zero active alerts.
--- 1 extra query if any alerts are marked as read.
+- 1 extra query if any alerts are marked as read.
