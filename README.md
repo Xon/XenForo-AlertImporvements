@@ -3,7 +3,7 @@
 A collection of improvements to the XenForo Alerts system.
 
 Features:
-- auto-mark alerts as read when visiting a thread
+- For threads, automatically marks alerts as read from content on a given page when viewed.
 
 #Performance impact
 

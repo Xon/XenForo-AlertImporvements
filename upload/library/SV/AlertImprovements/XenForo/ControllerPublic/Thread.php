@@ -14,16 +14,16 @@ class SV_AlertImprovements_XenForo_ControllerPublic_Thread extends XFCP_SV_Alert
 
                 $threadId = $response->params['thread']['thread_id'];
                 $posts = $response->params['posts'];
-                $lastPost = end($posts); reset($posts);
-                $lastPosition = $lastPost['position'];
+                $lastPost = end($posts); 
+                $firstPost = reset($posts);
 
                 $db = XenForo_Application::getDb();
                 $stmt = $db->query("
                     update xf_user_alert AS alert
                     join xf_post AS posts on posts.post_id = alert.content_id and alert.content_type = 'post'
                     set alert.view_date = ?
-                    where alert.alerted_user_id = ? and alert.view_date = 0 and posts.thread_id = ? and posts.position <= ?
-                ", array(XenForo_Application::$time, $userId, $threadId, $lastPosition));
+                    where alert.alerted_user_id = ? and alert.view_date = 0 and posts.thread_id = ? and posts.position >= ? and posts.position <= ?
+                ", array(XenForo_Application::$time, $userId, $threadId, $firstPost['position'], $lastPost['position']));
                 $rowsAffected = $stmt->rowCount();
 
                 if ($rowsAffected)
