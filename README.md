@@ -2,7 +2,7 @@
 
 A collection of improvements to the XenForo Alerts system.
 
-Features:
+#Features
 - For threads, automatically marks alerts as read from content on a given page when viewed.
 - Mark as unread link for individual alerts
 
