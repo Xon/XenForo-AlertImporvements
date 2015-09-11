@@ -1,0 +1,47 @@
+<?php
+
+class SV_AlertImprovements_XenForo_ControllerPublic_Thread extends XFCP_SV_AlertImprovements_XenForo_ControllerPublic_Thread
+{
+    public function actionIndex()
+    {
+        $response = parent::actionIndex();
+        if ($response instanceof XenForo_ControllerResponse_View && !empty($response->params['thread']))
+        {
+            $visitor = XenForo_Visitor::getInstance();
+            $userId = $visitor->getUserId();
+            if ($userId && $visitor->alerts_unread)
+            {
+
+                $threadId = $response->params['thread']['thread_id'];
+                $posts = $response->params['posts'];
+                $lastPost = end($posts); reset($posts);
+                $lastPosition = $lastPost['position'];
+
+                $db = XenForo_Application::getDb();
+                $stmt = $db->query("
+                    update xf_user_alert AS alert
+                    join xf_post AS posts on posts.post_id = alert.content_id and alert.content_type = 'post'
+                    set alert.view_date = ?
+                    where alert.alerted_user_id = ? and alert.view_date = 0 and posts.thread_id = ? and posts.position <= ?
+                ", array(XenForo_Application::$time, $userId, $threadId, $lastPosition));
+                $rowsAffected = $stmt->rowCount();
+
+                if ($rowsAffected)
+                {
+                    $db->query("
+                        update xf_user
+                        set alerts_unread = alerts_unread - ?
+                        where user_id = ?
+                    ", array($rowsAffected, $userId));
+
+                    $visitor['alerts_unread'] -= $rowsAffected;
+                    if ($visitor['alerts_unread'] < 0)
+                    {
+                        $visitor['alerts_unread'] = 0;
+                    }
+                }
+            }
+        }
+        return $response;
+    }
+}
