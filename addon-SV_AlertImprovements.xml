@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<addon addon_id="SV_AlertImprovements" title="Alert Improvements" version_string="1.0.0" version_id="1000001" url="" install_callback_class="" install_callback_method="" uninstall_callback_class="" uninstall_callback_method="">
+<addon addon_id="SV_AlertImprovements" title="Alert Improvements" version_string="1.0.0" version_id="1000000" url="" install_callback_class="" install_callback_method="" uninstall_callback_class="" uninstall_callback_method="">
   <admin_navigation/>
   <admin_permissions/>
   <admin_style_properties/>
@@ -27,13 +27,13 @@
   <style_properties/>
   <templates/>
   <public_template_modifications>
-    <modification template="account_alerts" modification_key="sv_alertimprovements_account_alerts" description="" execution_order="10" enabled="1" action="str_replace">
-      <find><![CDATA[<span class="newIcon"></span>]]></find>
-      <replace><![CDATA[<xen:if is="{$alert.view_date}">
-<a href="{xen:link 'account/unread-alert', '', 'alert_id={$alert.alert_id}'}">$0<span class="unreadLink">{xen:phrase sv_mark_unread}</span></a>
-<xen:else/>
-$0
-</xen:if>]]></replace>
+    <modification template="account_alerts" modification_key="sv_alertimprovements_account_alerts" description="" execution_order="10" enabled="1" action="preg_replace">
+      <find><![CDATA[#(<div class="timeRow.*?)(</div>)#si]]></find>
+      <replace><![CDATA[$1
+<xen:if is="{$alert.view_date}">
+<a href="{xen:link 'account/unread-alert', '', 'alert_id={$alert.alert_id}'}"><span class="unreadLink">{xen:phrase sv_mark_unread}</span></a>
+</xen:if>
+$2]]></replace>
     </modification>
   </public_template_modifications>
   <bb_code_media_sites/>
