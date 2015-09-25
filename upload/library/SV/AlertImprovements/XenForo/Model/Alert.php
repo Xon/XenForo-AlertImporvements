@@ -2,6 +2,12 @@
 
 class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements_XenForo_Model_Alert
 {
+    public function markAllAlertsReadForUser($userId, $time = null)
+    {
+        SV_AlertImprovements_Globals::$markedAlertsRead = true;
+        parent::markAllAlertsReadForUser($userId, $time);
+    }
+
     public function markPostsAsRead($threadId, array $posts)
     {
         if (empty($posts))

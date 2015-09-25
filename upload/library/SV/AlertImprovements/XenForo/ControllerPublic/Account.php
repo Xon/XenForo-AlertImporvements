@@ -2,6 +2,17 @@
 
 class SV_AlertImprovements_XenForo_ControllerPublic_Account extends XFCP_SV_AlertImprovements_XenForo_ControllerPublic_Account
 {
+    public function actionAlerts()
+    {
+        $response = parent::actionAlerts();
+        if ($response instanceof XenForo_ControllerResponse_View)
+        {
+            $response->params['markedAlertsRead'] = SV_AlertImprovements_Globals::$markedAlertsRead;
+        }
+
+        return $response;
+    }
+
     public function actionUnreadAlert()
     {
         $alertModel = $this->_getAlertModel();
