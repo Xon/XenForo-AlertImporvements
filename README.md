@@ -2,6 +2,8 @@
 
 A collection of improvements to the XenForo Alerts system.
 
+Note; Do not use MySQL statement-based replication with this add-on.
+
 #Features
 - For threads, automatically marks alerts as read from content on a given page when viewed.
 - Mark as unread link for individual alerts

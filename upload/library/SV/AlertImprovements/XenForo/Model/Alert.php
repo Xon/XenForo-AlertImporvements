@@ -22,7 +22,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
 
         $db = $this->_getDb();
         $stmt = $db->query("
-            update xf_user_alert
+            update ignore xf_user_alert
             set view_date = ?
             where alerted_user_id = ? and view_date = 0 and content_type = 'post' and content_id in (". $db->quote($postIds) .")
         ", array(XenForo_Application::$time, $userId));
