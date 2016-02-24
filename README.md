@@ -4,11 +4,14 @@ A collection of improvements to the XenForo Alerts system.
 
 Note; Do not use MySQL statement-based replication with this add-on.
 
-#Features
-- For threads, automatically marks alerts as read from content on a given page when viewed.
+##Features
+- Automatically marks alerts as read from content on a given page when viewed for:
+ - Threads
+ - Conversations
+ - Reports
 - Mark as unread link for individual alerts
 
-#Performance impact
+##Performance impact
 
-- 1 extra query per thread page request when the user has more than zero active alerts.
+- 1 extra query per thread/conversation/report page request when the user has more than zero active alerts.
 - 1 extra query if any alerts are marked as read.

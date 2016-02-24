@@ -8,9 +8,9 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         parent::markAllAlertsReadForUser($userId, $time);
     }
 
-    public function markPostsAsRead($threadId, array $posts)
+    public function markAlertsAsRead($contentType, array $contentIds)
     {
-        if (empty($posts))
+        if (empty($contentIds))
         {
             return;
         }
@@ -18,13 +18,11 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         $visitor = XenForo_Visitor::getInstance();
         $userId = $visitor->getUserId();
 
-        $postIds = XenForo_Application::arrayColumn($posts, 'post_id');
-
         $db = $this->_getDb();
         $stmt = $db->query("
             update ignore xf_user_alert
             set view_date = ?
-            where alerted_user_id = ? and view_date = 0 and content_type = 'post' and content_id in (". $db->quote($postIds) .")
+            where alerted_user_id = ? and view_date = 0 and content_type in(". $db->quote($contentType) .") and content_id in (". $db->quote($contentIds) .")
         ", array(XenForo_Application::$time, $userId));
         $rowsAffected = $stmt->rowCount();
 
