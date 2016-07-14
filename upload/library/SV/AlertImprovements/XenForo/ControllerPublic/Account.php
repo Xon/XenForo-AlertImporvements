@@ -7,7 +7,7 @@ class SV_AlertImprovements_XenForo_ControllerPublic_Account extends XFCP_SV_Aler
         $response = parent::actionAlerts();
         if ($response instanceof XenForo_ControllerResponse_View)
         {
-            $response->params['markedAlertsRead'] = SV_AlertImprovements_Globals::$markedAlertsRead;
+            $response->subView->params['markedAlertsRead'] = SV_AlertImprovements_Globals::$markedAlertsRead;
         }
 
         return $response;
