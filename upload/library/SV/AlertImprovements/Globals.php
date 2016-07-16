@@ -5,6 +5,7 @@
 class SV_AlertImprovements_Globals
 {
     public static $markedAlertsRead = false;
+    public static $PublicAccountController = false;
 
     private function __construct() {}
 }
