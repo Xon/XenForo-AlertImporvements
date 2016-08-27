@@ -35,27 +35,41 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                     set alerts_unread = GREATEST(0, cast(alerts_unread as signed) - ?)
                     where user_id = ?
                 ", array($rowsAffected, $userId));
-                $visitor['alerts_unread'] -= $rowsAffected;
-                if ($visitor['alerts_unread'] < 0)
-                {
-                    $visitor['alerts_unread'] = 0;
-                }
             }
             catch(Zend_Db_Statement_Mysqli_Exception $e)
             {
                 // something went wrong, recount the alerts and return
                 if (stripos($e->getMessage(), "Deadlock found when trying to get lock; try restarting transaction") !== false)
                 {
-                    $visitor['alerts_unread'] = $db->fetchOne('
-                        SELECT COUNT(*)
-                        FROM xf_user_alert
-                        WHERE alerted_user_id = ? AND view_date = 0',
-                    array($userId, $this->_getFetchModeDateCut(self::FETCH_MODE_RECENT)));
+                    if (XenForo_Db::inTransaction($db))
+                    {
+                        // why the hell are we inside a transaction?
+                        XenForo_Error::logException($e, false, 'Unexpected transaction; ');
+                        $rowsAffected = 0;
+                        $visitor['alerts_unread'] = $db->fetchOne('
+                            SELECT COUNT(*)
+                            FROM xf_user_alert
+                            WHERE alerted_user_id = ? AND view_date = 0',
+                        array($userId));
+                    }
+                    else
+                    {
+                        $db->query("
+                            update xf_user
+                            set alerts_unread = GREATEST(0, cast(alerts_unread as signed) - ?)
+                            where user_id = ?
+                        ", array($rowsAffected, $userId));
+                    }
                 }
                 else
                 {
                     throw $e;
                 }
+            }
+            $visitor['alerts_unread'] -= $rowsAffected;
+            if ($visitor['alerts_unread'] < 0)
+            {
+                $visitor['alerts_unread'] = 0;
             }
         }
     }
