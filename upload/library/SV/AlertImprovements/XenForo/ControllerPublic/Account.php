@@ -36,10 +36,10 @@ class SV_AlertImprovements_XenForo_ControllerPublic_Account extends XFCP_SV_Aler
         );
     }
 
-    public function actionAlertPreferencesSave()
+    public function actionPreferencesSave()
     {
         SV_AlertImprovements_Globals::$PublicAccountController = $this;
 
-        return parent::actionAlertPreferencesSave();
+        return parent::actionPreferencesSave();
     }
 }
