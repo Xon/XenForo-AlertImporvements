@@ -5,7 +5,10 @@ class SV_AlertImprovements_XenForo_ControllerPublic_Account extends XFCP_SV_Aler
     public function actionAlerts()
     {
         $visitor = XenForo_Visitor::getInstance()->toArray();
-        if (!empty($visitor['sv_alerts_page_skips_mark_read']))
+
+        $explicitMarkAsRead = isset($_REQUEST['skip_mark_read']) && empty($_REQUEST['skip_mark_read']);
+
+        if (!empty($visitor['sv_alerts_page_skips_mark_read']) && !$explicitMarkAsRead)
         {
             $_POST['skip_mark_read'] = 1;
         }
@@ -14,6 +17,14 @@ class SV_AlertImprovements_XenForo_ControllerPublic_Account extends XFCP_SV_Aler
         if ($response instanceof XenForo_ControllerResponse_View)
         {
             $response->subView->params['markedAlertsRead'] = SV_AlertImprovements_Globals::$markedAlertsRead;
+        }
+
+        if ($explicitMarkAsRead)
+        {
+            return $this->responseRedirect(
+                XenForo_ControllerResponse_Redirect::SUCCESS,
+                XenForo_Link::buildPublicLink('account/alerts', array(), array())
+            );
         }
 
         return $response;
