@@ -10,7 +10,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
 
     public function markAlertsAsRead($contentType, array $contentIds)
     {
-        if (empty($contentIds))
+        if (self::PREVENT_MARK_READ || empty($contentIds))
         {
             return;
         }
