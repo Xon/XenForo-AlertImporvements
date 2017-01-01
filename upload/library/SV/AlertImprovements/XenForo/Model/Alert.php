@@ -82,7 +82,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
 
         $db->query("
             update xf_user
-            set alerts_unread = alerts_unread + 1
+            set alerts_unread = LEAST(alerts_unread + 1, 65535)
             where user_id = ?
         ", $userId);
 
