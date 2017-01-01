@@ -11,12 +11,41 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
     public function countAlertsForUser($userId)
     {
         // need to replace the entire query...
+        $summerizeSQL = SV_AlertImprovements_Globals::$summerizationAlerts ? 'AND summerize_id is null' : '';
+        // *********************
         return $this->_getDb()->fetchOne('
             SELECT COUNT(*)
             FROM xf_user_alert
-            WHERE alerted_user_id = ? AND summerize_id is null
+            WHERE alerted_user_id = ? '.$summerizeSQL.'
                 AND (view_date = 0 OR view_date > ?)
         ', array($userId, $this->_getFetchModeDateCut(self::FETCH_MODE_RECENT)));
+        // *********************
+    }
+
+    function endswith($string, $test)
+    {
+        $strlen = strlen($string);
+        $testlen = strlen($test);
+        if ($testlen > $strlen) return false;
+        return substr_compare($string, $test, $strlen - $testlen, $testlen) === 0;
+    }
+
+    public function getAlertHandlers()
+    {
+        $handlerClasses = $this->getContentTypesWithField('alert_handler_class');
+        $handlers = array();
+        foreach ($handlerClasses AS $contentType => $handlerClass)
+        {
+            if (!$handlerClass || !class_exists($handlerClass))
+            {
+                continue;
+            }
+
+            $handlers[$contentType] = XenForo_AlertHandler_Abstract::create($handlerClass);
+        }
+        $this->_handlerCache = $handlers;
+
+        return $handlers;
     }
 
     protected function _getAlertsFromSource($userId, $fetchMode, array $fetchOptions = array())
@@ -38,6 +67,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         }
 
         // need to replace the entire query...
+        $summerizeSQL = SV_AlertImprovements_Globals::$summerizationAlerts ? 'AND summerize_id is null' : '';
 
         //$alerts = parent::_getAlertsFromSource($userId, $fetchMode, $fetchOptions);
         // *********************
@@ -58,7 +88,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                 FROM xf_user_alert AS alert
                 LEFT JOIN xf_user AS user ON
                     (user.user_id = alert.user_id)
-                WHERE alert.alerted_user_id = ? AND summerize_id is null
+                WHERE alert.alerted_user_id = ? '.$summerizeSQL.'
                     AND (alert.view_date = 0 OR alert.view_date > ?)
                 ORDER BY event_date DESC
             ', $limitOptions['limit'], $limitOptions['offset']
@@ -70,22 +100,32 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             $oldAlerts = $alerts;
             $ungroupedAlerts = array();
             $groupedAlerts = array();
+            $db = $this->_getDb();
+            // build the list of handlers at once, and exclude based
+            $handlers = $this->getAlertHandlers();
+            foreach ($handlers AS $key => $handler)
+            {
+                if (!is_callable(array($handler, 'canSummarize')) ||
+                    !is_callable(array($handler, 'summarizeAlerts')))
+                {
+                    unset($handlers['$key']);
+                }
+            }
+
             // collect alerts into groupings by content/id
             $groupedContentAlerts = array();
             $groupedUserAlerts = array();
-            $db = $this->_getDb();
             foreach ($alerts AS $id => $item)
             {
-                if ($item['action'] == 'summary' || $item['view_date'])
+                if ($item['view_date'] ||
+                    empty($handlers[$item['content_type']]) ||
+                    $this->endswith($item['action'], '_summary'))
                 {
                     $ungroupedAlerts[$id] = $item;
                     continue;
                 }
-                $handler = $this->_getAlertHandlerFromCache($item['content_type']);
-                if (!$handler ||
-                    !is_callable(array($handler, 'canSummarize')) ||
-                    !is_callable(array($handler, 'summarizeAlerts')) ||
-                    !$handler->canSummarize($item))
+                $handler = $handlers[$item['content_type']];
+                if (!$handler->canSummarize($item))
                 {
                     $ungroupedAlerts[$id] = $item;
                     continue;
@@ -142,6 +182,17 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                 }
             }
 
+            // update alert totals
+            if ($groupedAlerts)
+            {
+                $visitor = XenForo_Visitor::getInstance();
+                $visitor['alerts_unread'] = $db->fetchOne('
+                    SELECT COUNT(*)
+                    FROM xf_user_alert
+                    WHERE alerted_user_id = ? AND view_date = 0',
+                array($userId));
+            }
+
             // merge the grouped & ungrouped alerts back together
             $groupedAlerts = array_merge($ungroupedAlerts, $groupedAlerts);
             uasort($groupedAlerts, function($a, $b) {
@@ -161,26 +212,6 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         }
 
         return $alerts;
-    }
-
-    public function getAlertsForUser($userId, $fetchMode, array $fetchOptions = array(), array $viewingUser = null)
-    {
-/*
-        $this->standardizeViewingUserReference($viewingUser);
-
-        $alerts = $this->_getAlertsFromSource($userId, $fetchMode, $fetchOptions);
-
-        $alerts = $this->_getContentForAlerts($alerts, $userId, $viewingUser);
-        $alerts = $this->_getViewableAlerts($alerts, $viewingUser);
-
-        $alerts = $this->prepareAlerts($alerts, $viewingUser);
-
-        return array(
-            'alerts' => $alerts,
-            'alertHandlers' => $this->_handlerCache
-        );
-*/
-        return parent::getAlertsForUser($userId, $fetchMode, $fetchOptions, $viewingUser);
     }
 
     public function markAlertsAsRead($contentType, array $contentIds)
@@ -231,13 +262,14 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                 {
                     if (XenForo_Db::inTransaction($db))
                     {
+                        $summerizeSQL = SV_AlertImprovements_Globals::$summerizationAlerts ? 'AND summerize_id is null' : '';
                         // why the hell are we inside a transaction?
                         XenForo_Error::logException($e, false, 'Unexpected transaction; ');
                         $rowsAffected = 0;
                         $visitor['alerts_unread'] = $db->fetchOne('
                             SELECT COUNT(*)
                             FROM xf_user_alert
-                            WHERE alerted_user_id = ? AND view_date = 0',
+                            WHERE alerted_user_id = ? AND view_date = 0 '.$summerizeSQL,
                         array($userId));
                     }
                     else
