@@ -135,6 +135,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             }
 
             // determine what can be summerised by various types. These require explicit support (ie a template)
+            $grouped = 0;
             foreach ($groupedContentAlerts AS $contentType => &$contentIds)
             {
                 $handler = $this->_getAlertHandlerFromCache($contentType);
@@ -166,11 +167,13 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                         $summaryAlert['avatar_date'] = null;
                         $summaryAlert['gravatar'] = null;
                         // hide the non-summary alerts
-                        $db->query('
+                        $stmt = $db->query('
                             UPDATE xf_user_alert
                             SET summerize_id = ?, view_date = ?
                             WHERE alert_id in (' . $db->quote(XenForo_Application::arrayColumn($alertGrouping, 'alert_id')). ')
                         ', array($summaryAlert['alert_id'], XenForo_Application::$time));
+                        $rowsAffected = $stmt->rowCount();
+                        $grouped += $rowsAffected;
                         // add to grouping
                         $groupedAlerts[$summaryAlert['alert_id']] = $summaryAlert;
                     }
@@ -189,8 +192,13 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                 $visitor['alerts_unread'] = $db->fetchOne('
                     SELECT COUNT(*)
                     FROM xf_user_alert
-                    WHERE alerted_user_id = ? AND view_date = 0',
-                array($userId));
+                    WHERE alerted_user_id = ? AND view_date = 0 '.$summerizeSQL.'
+                ', array($userId));
+                $db->query("
+                    update xf_user
+                    set alerts_unread = GREATEST(0, cast(alerts_unread as signed) - ?)
+                    where user_id = ?
+                ", array($grouped, $userId));
             }
 
             // merge the grouped & ungrouped alerts back together
