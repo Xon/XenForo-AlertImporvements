@@ -1,0 +1,6 @@
+<?php
+
+class SV_AlertImprovements_XenForo_AlertHandler_User extends XFCP_SV_AlertImprovements_XenForo_AlertHandler_User
+{
+
+}

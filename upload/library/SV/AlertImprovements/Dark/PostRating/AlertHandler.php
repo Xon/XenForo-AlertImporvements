@@ -41,8 +41,20 @@ class SV_AlertImprovements_Dark_PostRating_AlertHandler extends XFCP_SV_AlertImp
         return $item;
     }
 
-    public function summarizeAlerts(array $summaryAlert, array $alerts)
+    public function summarizeAlerts(array $summaryAlert, array $alerts, $groupingStyle)
     {
+        if ($groupingStyle != 'content')
+        {
+            return null;
+        }
+        /*
+        'user_id' => 0,
+        'username' => 'Guest',
+        'content_type' => $contentType,
+        'content_id' => $contentId,
+        'action' => $lastAlert['action'].'_summary',
+        */
+        
         $alert = end($alerts);
         $min = $alert['event_date'];
         $alert = reset($alerts);

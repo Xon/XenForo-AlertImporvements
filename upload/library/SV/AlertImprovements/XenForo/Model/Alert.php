@@ -48,6 +48,81 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         return $handlers;
     }
 
+    protected function insertSummaryAlert($handler, $summarizeThreshold, $contentType, $contentId, array $alertGrouping, &$grouped, array &$groupedAlerts, array &$ungroupedAlerts, $groupingStyle)
+    {
+        $grouped = 0;
+        if (!$summarizeThreshold || count($alertGrouping) < $summarizeThreshold)
+        if (empty($summaryAlert))
+        {
+            $ungroupedAlerts = array_merge($ungroupedAlerts, $alertGrouping);
+            return false;
+        }
+        /*
+        'user_id' => 0,
+        'username' => 'Guest',
+        'content_type' => $contentType,
+        'content_id' => $contentId,
+        'action' => $lastAlert['action'].'_summary',
+        */
+        $lastAlert = end($alertGrouping);
+        // inject a grouped alert with the same content type/id, but with a different action
+        $summaryAlert = array(
+            'alerted_user_id' => $lastAlert['alerted_user_id'],
+            'user_id' => 0,
+            'username' => 'Guest',
+            'content_type' => $contentType,
+            'content_id' => $contentId,
+            'action' => $lastAlert['action'].'_summary',
+            'event_date' => $lastAlert['event_date'],
+            'view_date'  => 0,
+            'extra_data' => array(),
+        );
+        $summaryAlert = $handler->summarizeAlerts($summaryAlert, $alertGrouping, $groupingStyle);
+        if (empty($summaryAlert))
+        {
+            $ungroupedAlerts = array_merge($ungroupedAlerts, $alertGrouping);
+            return false;
+        }
+        // database update
+        $dw = XenForo_DataWriter::create('XenForo_DataWriter_Alert');
+        $dw->bulkSet($summaryAlert);
+        $dw->save();
+        $summaryAlert = $dw->getMergedData();
+        // bits required for alert processing
+        $summaryAlert['gender'] = null;
+        $summaryAlert['avatar_date'] = null;
+        $summaryAlert['gravatar'] = null;
+        // hide the non-summary alerts
+        $db = $this->_getDb();
+        $stmt = $db->query('
+            UPDATE xf_user_alert
+            SET summerize_id = ?, view_date = ?
+            WHERE alert_id in (' . $db->quote(XenForo_Application::arrayColumn($alertGrouping, 'alert_id')). ')
+        ', array($summaryAlert['alert_id'], XenForo_Application::$time));
+        $rowsAffected = $stmt->rowCount();
+        // add to grouping
+        $grouped += $rowsAffected;
+        $groupedAlerts[$summaryAlert['alert_id']] = $summaryAlert;
+        return true;
+    }
+
+    protected function groupAlerts($handlers, $summarizeThreshold, &$groupedContentAlerts, &$groupedAlerts, &$ungroupedAlerts, $groupingStyle)
+    {
+        $grouped = 0;
+        foreach ($groupedContentAlerts AS $contentType => &$contentIds)
+        {
+            $handler = $handlers[$contentType];
+            foreach ($contentIds AS $contentId => $alertGrouping)
+            {
+                if (!$this->insertSummaryAlert($handler, $summarizeThreshold, $contentType, $contentId, $alertGrouping, $grouped, $groupedAlerts, $ungroupedAlerts, $groupingStyle))
+                {
+                    unset($contentIds[$contentId]);
+                }
+            }
+        }
+        return $grouped;
+    }
+
     protected function _getAlertsFromSource($userId, $fetchMode, array $fetchOptions = array())
     {
         $summarizeThreshold = 4; // $viewingUser['summarizeAlertThreshold']
@@ -108,7 +183,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                 if (!is_callable(array($handler, 'canSummarize')) ||
                     !is_callable(array($handler, 'summarizeAlerts')))
                 {
-                    unset($handlers['$key']);
+                    unset($handlers[$key]);
                 }
             }
 
@@ -131,58 +206,16 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                     continue;
                 }
                 $groupedContentAlerts[$item['content_type']][$item['content_id']][] = $item;
-                //$groupedUserAlerts[$item['user_id']][$item['content_type']][$item['content_id']][] = $item;
+                $groupedUserAlerts[$item['user_id']][$item['content_type']][$item['content_id']][] = $item;
             }
 
             // determine what can be summerised by various types. These require explicit support (ie a template)
             $grouped = 0;
-            foreach ($groupedContentAlerts AS $contentType => &$contentIds)
+            $grouped += $this->groupAlerts($handlers, $summarizeThreshold, $groupedContentAlerts, $groupedAlerts, $ungroupedAlerts, 'content');
+
+            foreach ($groupedUserAlerts AS $senderUserId => &$userGroupedAlerts)
             {
-                $handler = $handlers[$contentType];
-                foreach ($contentIds AS $contentId => $alertGrouping)
-                {
-                    if ($summarizeThreshold && count($alertGrouping) > $summarizeThreshold)
-                    {
-                        $lastAlert = end($alertGrouping);
-                        // inject a grouped alert with the same content type/id, but with a different action
-                        $summaryAlert = array(
-                            'alerted_user_id' => $lastAlert['alerted_user_id'],
-                            'user_id' => 0,
-                            'username' => 'Guest',
-                            'content_type' => $contentType,
-                            'content_id' => $contentId,
-                            'action' => $lastAlert['action'].'_summary',
-                            'event_date' => $lastAlert['event_date'],
-                            'view_date'  => 0,
-                            'extra_data' => array(),
-                        );
-                        $summaryAlert = $handler->summarizeAlerts($summaryAlert, $alertGrouping);
-                        // database update
-                        $dw = XenForo_DataWriter::create('XenForo_DataWriter_Alert');
-                        $dw->bulkSet($summaryAlert);
-                        $dw->save();
-                        $summaryAlert = $dw->getMergedData();
-                        // bits required for alert processing
-                        $summaryAlert['gender'] = null;
-                        $summaryAlert['avatar_date'] = null;
-                        $summaryAlert['gravatar'] = null;
-                        // hide the non-summary alerts
-                        $stmt = $db->query('
-                            UPDATE xf_user_alert
-                            SET summerize_id = ?, view_date = ?
-                            WHERE alert_id in (' . $db->quote(XenForo_Application::arrayColumn($alertGrouping, 'alert_id')). ')
-                        ', array($summaryAlert['alert_id'], XenForo_Application::$time));
-                        $rowsAffected = $stmt->rowCount();
-                        $grouped += $rowsAffected;
-                        // add to grouping
-                        $groupedAlerts[$summaryAlert['alert_id']] = $summaryAlert;
-                    }
-                    else
-                    {
-                        $ungroupedAlerts = array_merge($ungroupedAlerts, $alertGrouping);
-                        unset($contentIds[$contentId]);
-                    }
-                }
+                $grouped += $this->groupAlerts($handlers, $summarizeThreshold, $userGroupedAlerts, $groupedAlerts, $ungroupedAlerts, 'user');
             }
 
             // update alert totals

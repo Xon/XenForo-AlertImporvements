@@ -7,8 +7,13 @@ class SV_AlertImprovements_XenForo_AlertHandler_DiscussionMessage_Post extends X
         return $alert['action'] == 'like';
     }
 
-    public function summarizeAlerts(array $summaryAlert, array $alerts)
+    public function summarizeAlerts(array $summaryAlert, array $alerts, $groupingStyle)
     {
+        if ($groupingStyle != 'content')
+        {
+            return null;
+        }
+
         $summaryAlert['extra_data']['likes'] = count($alerts);
         return $summaryAlert;
     }
