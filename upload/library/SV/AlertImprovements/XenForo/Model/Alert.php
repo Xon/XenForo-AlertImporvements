@@ -8,6 +8,181 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         parent::markAllAlertsReadForUser($userId, $time);
     }
 
+    public function countAlertsForUser($userId)
+    {
+        // need to replace the entire query...
+        return $this->_getDb()->fetchOne('
+            SELECT COUNT(*)
+            FROM xf_user_alert
+            WHERE alerted_user_id = ? AND summerize_id is null
+                AND (view_date = 0 OR view_date > ?)
+        ', array($userId, $this->_getFetchModeDateCut(self::FETCH_MODE_RECENT)));
+    }
+
+    protected function _getAlertsFromSource($userId, $fetchMode, array $fetchOptions = array())
+    {
+        $summarizeThreshold = 4; // $viewingUser['summarizeAlertThreshold']
+        $originalLimit = 0;
+        $this->standardizeViewingUserReference($viewingUser);
+        $summarize = false;
+        // determine is summarize needs to occur
+        if (($fetchMode == static::FETCH_MODE_POPUP || $fetchMode == static::FETCH_MODE_RECENT) &&
+            $viewingUser['alerts_unread'] > 25 &&
+            (!isset($fetchOptions['page']) || $fetchOptions['page'] == 0))
+        {
+            $fetchMode = static::FETCH_MODE_RECENT;
+            $summarize = true;
+            $fetchOptions['page'] = 0;
+            $originalLimit = 25;
+            unset($fetchOptions['perPage']);
+        }
+
+        // need to replace the entire query...
+
+        //$alerts = parent::_getAlertsFromSource($userId, $fetchMode, $fetchOptions);
+        // *********************
+        if ($fetchMode == self::FETCH_MODE_POPUP)
+        {
+            $fetchOptions['page'] = 0;
+            $fetchOptions['perPage'] = 25;
+        }
+
+        $limitOptions = $this->prepareLimitFetchOptions($fetchOptions);
+
+        $alerts = $this->fetchAllKeyed($this->limitQueryResults(
+            '
+                SELECT
+                    alert.*,
+                    user.gender, user.avatar_date, user.gravatar,
+                    IF (user.user_id IS NULL, alert.username, user.username) AS username
+                FROM xf_user_alert AS alert
+                LEFT JOIN xf_user AS user ON
+                    (user.user_id = alert.user_id)
+                WHERE alert.alerted_user_id = ? AND summerize_id is null
+                    AND (alert.view_date = 0 OR alert.view_date > ?)
+                ORDER BY event_date DESC
+            ', $limitOptions['limit'], $limitOptions['offset']
+        ), 'alert_id', array($userId, $this->_getFetchModeDateCut($fetchMode)));
+        // *********************
+
+        if ($summarize)
+        {
+            $oldAlerts = $alerts;
+            $ungroupedAlerts = array();
+            $groupedAlerts = array();
+            // collect alerts into groupings by content/id
+            $groupedContentAlerts = array();
+            $groupedUserAlerts = array();
+            $db = $this->_getDb();
+            foreach ($alerts AS $id => $item)
+            {
+                if ($item['action'] == 'summary' || $item['view_date'])
+                {
+                    $ungroupedAlerts[$id] = $item;
+                    continue;
+                }
+                $handler = $this->_getAlertHandlerFromCache($item['content_type']);
+                if (!$handler ||
+                    !is_callable(array($handler, 'canSummarize')) ||
+                    !is_callable(array($handler, 'summarizeAlerts')) ||
+                    !$handler->canSummarize($item))
+                {
+                    $ungroupedAlerts[$id] = $item;
+                    continue;
+                }
+                $groupedContentAlerts[$item['content_type']][$item['content_id']][] = $item;
+                //$groupedUserAlerts[$item['user_id']][$item['content_type']][$item['content_id']][] = $item;
+            }
+
+            // determine what can be summerised by various types. These require explicit support (ie a template)
+            foreach ($groupedContentAlerts AS $contentType => &$contentIds)
+            {
+                $handler = $this->_getAlertHandlerFromCache($contentType);
+                foreach ($contentIds AS $contentId => $alertGrouping)
+                {
+                    if ($summarizeThreshold && count($alertGrouping) > $summarizeThreshold)
+                    {
+                        $lastAlert = end($alertGrouping);
+                        // inject a grouped alert with the same content type/id, but with a different action
+                        $summaryAlert = array(
+                            'alerted_user_id' => $lastAlert['alerted_user_id'],
+                            'user_id' => 0,
+                            'username' => 'Guest',
+                            'content_type' => $contentType,
+                            'content_id' => $contentId,
+                            'action' => $lastAlert['action'].'_summary',
+                            'event_date' => $lastAlert['event_date'],
+                            'view_date'  => 0,
+                            'extra_data' => array(),
+                        );
+                        $summaryAlert = $handler->summarizeAlerts($summaryAlert, $alertGrouping);
+                        // database update
+                        $dw = XenForo_DataWriter::create('XenForo_DataWriter_Alert');
+                        $dw->bulkSet($summaryAlert);
+                        $dw->save();
+                        $summaryAlert = $dw->getMergedData();
+                        // bits required for alert processing
+                        $summaryAlert['gender'] = null;
+                        $summaryAlert['avatar_date'] = null;
+                        $summaryAlert['gravatar'] = null;
+                        // hide the non-summary alerts
+                        $db->query('
+                            UPDATE xf_user_alert
+                            SET summerize_id = ?, view_date = ?
+                            WHERE alert_id in (' . $db->quote(XenForo_Application::arrayColumn($alertGrouping, 'alert_id')). ')
+                        ', array($summaryAlert['alert_id'], XenForo_Application::$time));
+                        // add to grouping
+                        $groupedAlerts[$summaryAlert['alert_id']] = $summaryAlert;
+                    }
+                    else
+                    {
+                        $ungroupedAlerts = array_merge($ungroupedAlerts, $alertGrouping);
+                        unset($contentIds[$contentId]);
+                    }
+                }
+            }
+
+            // merge the grouped & ungrouped alerts back together
+            $groupedAlerts = array_merge($ungroupedAlerts, $groupedAlerts);
+            uasort($groupedAlerts, function($a, $b) {
+                if ($a['event_date'] == $b['event_date'])
+                {
+                    return ($a['alert_id'] < $b['alert_id']) ? 1 : -1;
+                }
+                return ($a['event_date'] < $b['event_date']) ? 1 : -1;
+            });
+            $alerts = $groupedAlerts;
+
+            // sanity check
+            if ($originalLimit && count($alerts) > $originalLimit)
+            {
+                $alerts = array_slice($alerts, 0, $originalLimit, true);
+            }
+        }
+
+        return $alerts;
+    }
+
+    public function getAlertsForUser($userId, $fetchMode, array $fetchOptions = array(), array $viewingUser = null)
+    {
+/*
+        $this->standardizeViewingUserReference($viewingUser);
+
+        $alerts = $this->_getAlertsFromSource($userId, $fetchMode, $fetchOptions);
+
+        $alerts = $this->_getContentForAlerts($alerts, $userId, $viewingUser);
+        $alerts = $this->_getViewableAlerts($alerts, $viewingUser);
+
+        $alerts = $this->prepareAlerts($alerts, $viewingUser);
+
+        return array(
+            'alerts' => $alerts,
+            'alertHandlers' => $this->_handlerCache
+        );
+*/
+        return parent::getAlertsForUser($userId, $fetchMode, $fetchOptions, $viewingUser);
+    }
+
     public function markAlertsAsRead($contentType, array $contentIds)
     {
         if (self::PREVENT_MARK_READ || empty($contentIds))
