@@ -138,7 +138,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             $grouped = 0;
             foreach ($groupedContentAlerts AS $contentType => &$contentIds)
             {
-                $handler = $this->_getAlertHandlerFromCache($contentType);
+                $handler = $handlers[$contentType];
                 foreach ($contentIds AS $contentId => $alertGrouping)
                 {
                     if ($summarizeThreshold && count($alertGrouping) > $summarizeThreshold)
