@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<addon addon_id="SV_AlertImprovements" title="Alert Improvements" version_string="1.3.2" version_id="1030200" url="https://xenforo.com/community/resources/alert-improvements-by-xon.4578/" install_callback_class="SV_AlertImprovements_Installer" install_callback_method="install" uninstall_callback_class="SV_AlertImprovements_Installer" uninstall_callback_method="uninstall">
+<addon addon_id="SV_AlertImprovements" title="Alert Improvements" version_string="1.4.0" version_id="1040000" url="https://xenforo.com/community/resources/alert-improvements-by-xon.4578/" install_callback_class="SV_AlertImprovements_Installer" install_callback_method="install" uninstall_callback_class="SV_AlertImprovements_Installer" uninstall_callback_method="uninstall">
   <admin_navigation/>
   <admin_permissions/>
   <admin_style_properties/>
@@ -8,6 +8,7 @@
   <code_events/>
   <code_event_listeners>
     <listener event_id="load_class" execute_order="4578" callback_class="SV_AlertImprovements_Listener" callback_method="load_class" active="1" hint="XenForo_AlertHandler_DiscussionMessage_Post" description="XenForo_AlertHandler_DiscussionMessage_Post"/>
+    <listener event_id="load_class" execute_order="4578" callback_class="SV_AlertImprovements_Listener" callback_method="load_class" active="1" hint="XenForo_AlertHandler_User" description="XenForo_AlertHandler_User"/>
     <listener event_id="load_class" execute_order="4578" callback_class="SV_AlertImprovements_Listener" callback_method="load_class" active="1" hint="Dark_PostRating_AlertHandler" description="Dark_PostRating_AlertHandler"/>
     <listener event_id="load_class" execute_order="4578" callback_class="SV_AlertImprovements_Listener" callback_method="load_class" active="1" hint="XenForo_DataWriter_Alert" description="XenForo_DataWriter_Alert"/>
     <listener event_id="load_class" execute_order="4578" callback_class="SV_AlertImprovements_Listener" callback_method="load_class" active="1" hint="XenForo_Model_Alert" description="XenForo_Model_Alert"/>
@@ -31,6 +32,7 @@
     <phrase title="sv_alert_page_skip_mark_read" version_id="1030000" version_string="1.3.0"><![CDATA[On viewing alerts page, do not mark alerts as read]]></phrase>
     <phrase title="sv_mark_all_alerts_read" version_id="1030000" version_string="1.3.0"><![CDATA[Mark all as read]]></phrase>
     <phrase title="sv_mark_unread" version_id="1000000" version_string="1.0.0"><![CDATA[Mark unread]]></phrase>
+    <phrase title="x_post_y_rated_z" version_id="1040000" version_string="1.4.0"><![CDATA[On {count} of your posts, {name} rated them {ratings}]]></phrase>
     <phrase title="your_post_in_the_thread_y_has_been_liked_x" version_id="1030000" version_string="1.3.0"><![CDATA[Your post in the thread {title} has been liked {likes} times.]]></phrase>
     <phrase title="your_post_in_the_thread_y_has_been_rated_x" version_id="1030000" version_string="1.3.0"><![CDATA[Your post in the thread {title} has been rated {ratings}]]></phrase>
   </phrases>
@@ -87,22 +89,32 @@
 }
 (jQuery, this, document);
 </script>]]></template>
-    <template title="alert_postrating_rate_summary" version_id="1030000" version_string="1.3.0"><![CDATA[<xen:set var="$ratingString">
-<xen:foreach loop="$extra.ratings" value="$data">
-	<xen:set var="$ratingIcon"><xen:if is="{$data.rating.name}"><xen:if is="{$data.rating.sprite_mode}"><img src="styles/default/xenforo/clear.png" alt="" style="background: url('styles/dark/ratings/{$data.rating.name}') no-repeat {$data.rating.sprite_params.x}px {$data.rating.sprite_params.y}px; width: {$data.rating.sprite_params.w}px; height: {$data.rating.sprite_params.h}px; vertical-align: middle;" /><xen:else /><img src="styles/dark/ratings/{$data.rating.name}" alt="" style="vertical-align:middle" /></xen:if></xen:if></xen:set>
-	{xen:raw $ratingIcon} {$data.count}
+    <template title="alert_post_like_summary" version_id="1040000" version_string="1.4.0"><![CDATA[{xen:phrase your_post_in_the_thread_y_has_been_liked_x,
+	'likes={$extra.likes}',
+	'title=<a href="{xen:link posts, $content}" class="PopupItemLink">{xen:helper threadPrefix, $content}{$content.title}</a>'}
+]]></template>
+    <template title="alert_post_rate_summary" version_id="1040000" version_string="1.4.0"><![CDATA[<xen:set var="$ratingString">
+<xen:foreach loop="$extra.ratings" key="$key" value="$rating">
+	<xen:set var="$ratingIcon"><xen:if is="{$rating.name}"><xen:if is="{$rating.sprite_mode}"><img src="styles/default/xenforo/clear.png" alt="" style="background: url('styles/dark/ratings/{$rating.name}') no-repeat {$rating.sprite_params.x}px {$rating.sprite_params.y}px; width: {$rating.sprite_params.w}px; height: {$rating.sprite_params.h}px; vertical-align: middle;" /><xen:else /><img src="styles/dark/ratings/{$rating.name}" alt="" style="vertical-align:middle" /></xen:if></xen:if></xen:set>
+	{xen:raw $ratingIcon} {$rating.count}
 </xen:foreach>
 </xen:set>
 
 {xen:phrase your_post_in_the_thread_y_has_been_rated_x,
 	'ratings={xen:raw $ratingString}',
-	'title=<a href="{xen:link posts, $content}" class="PopupItemLink">{xen:helper threadPrefix, $content}{$content.title}</a>'}
-	
-	
-	]]></template>
-    <template title="alert_post_like_summary" version_id="1030000" version_string="1.3.0"><![CDATA[{xen:phrase your_post_in_the_thread_y_has_been_liked_x,
-	'likes={$extra.likes}',
 	'title=<a href="{xen:link posts, $content}" class="PopupItemLink">{xen:helper threadPrefix, $content}{$content.title}</a>'}]]></template>
+    <template title="alert_user_like_summary" version_id="1040000" version_string="1.4.0"><![CDATA[{xen:helper dump, $extra}]]></template>
+    <template title="alert_user_rate_summary" version_id="1040000" version_string="1.4.0"><![CDATA[<xen:set var="$ratingString">
+<xen:foreach loop="$extra.ratings" key="$key" value="$rating">
+	<xen:set var="$ratingIcon"><xen:if is="{$rating.name}"><xen:if is="{$rating.sprite_mode}"><img src="styles/default/xenforo/clear.png" alt="" style="background: url('styles/dark/ratings/{$rating.name}') no-repeat {$rating.sprite_params.x}px {$rating.sprite_params.y}px; width: {$rating.sprite_params.w}px; height: {$rating.sprite_params.h}px; vertical-align: middle;" /><xen:else /><img src="styles/dark/ratings/{$rating.name}" alt="" style="vertical-align:middle" /></xen:if></xen:if></xen:set>
+	{xen:raw $ratingIcon} {$rating.count}
+</xen:foreach>
+</xen:set>
+
+{xen:phrase x_post_y_rated_z,
+	'count={$extra.totalRatings}',
+	'name={xen:helper username, $user, 'subject'}',
+	'ratings={xen:raw $ratingString}'}]]></template>
     <template title="SV_AlertImprovements_Alert_Preferences" version_id="1030000" version_string="1.3.0"><![CDATA[<li>
     <label for="ctrl_sv_alerts_page_skips_mark_read"><input type="checkbox" name="sv_alerts_page_skips_mark_read" value="1" id="ctrl_sv_alerts_page_skips_mark_read" {xen:checked "{$visitor.sv_alerts_page_skips_mark_read}"} />
         {xen:phrase sv_alert_page_skip_mark_read}

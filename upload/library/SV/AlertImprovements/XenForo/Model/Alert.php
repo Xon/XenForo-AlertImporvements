@@ -48,28 +48,20 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         return $handlers;
     }
 
-    protected function insertSummaryAlert($handler, $summarizeThreshold, $contentType, $contentId, array $alertGrouping, &$grouped, array &$groupedAlerts, array &$ungroupedAlerts, $groupingStyle)
+    protected function insertSummaryAlert($handler, $summarizeThreshold, $contentType, $contentId, array $alertGrouping, &$grouped, array &$outputAlerts, $groupingStyle, $senderUserId)
     {
         $grouped = 0;
         if (!$summarizeThreshold || count($alertGrouping) < $summarizeThreshold)
-        if (empty($summaryAlert))
         {
-            $ungroupedAlerts = array_merge($ungroupedAlerts, $alertGrouping);
             return false;
         }
-        /*
-        'user_id' => 0,
-        'username' => 'Guest',
-        'content_type' => $contentType,
-        'content_id' => $contentId,
-        'action' => $lastAlert['action'].'_summary',
-        */
         $lastAlert = end($alertGrouping);
+
         // inject a grouped alert with the same content type/id, but with a different action
         $summaryAlert = array(
             'alerted_user_id' => $lastAlert['alerted_user_id'],
-            'user_id' => 0,
-            'username' => 'Guest',
+            'user_id' => $senderUserId,
+            'username' => $senderUserId ? $lastAlert['username'] : 'Guest',
             'content_type' => $contentType,
             'content_id' => $contentId,
             'action' => $lastAlert['action'].'_summary',
@@ -80,7 +72,6 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         $summaryAlert = $handler->summarizeAlerts($summaryAlert, $alertGrouping, $groupingStyle);
         if (empty($summaryAlert))
         {
-            $ungroupedAlerts = array_merge($ungroupedAlerts, $alertGrouping);
             return false;
         }
         // database update
@@ -102,29 +93,14 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         $rowsAffected = $stmt->rowCount();
         // add to grouping
         $grouped += $rowsAffected;
-        $groupedAlerts[$summaryAlert['alert_id']] = $summaryAlert;
+        $outputAlerts[$summaryAlert['alert_id']] = $summaryAlert;
         return true;
-    }
-
-    protected function groupAlerts($handlers, $summarizeThreshold, &$groupedContentAlerts, &$groupedAlerts, &$ungroupedAlerts, $groupingStyle)
-    {
-        $grouped = 0;
-        foreach ($groupedContentAlerts AS $contentType => &$contentIds)
-        {
-            $handler = $handlers[$contentType];
-            foreach ($contentIds AS $contentId => $alertGrouping)
-            {
-                if (!$this->insertSummaryAlert($handler, $summarizeThreshold, $contentType, $contentId, $alertGrouping, $grouped, $groupedAlerts, $ungroupedAlerts, $groupingStyle))
-                {
-                    unset($contentIds[$contentId]);
-                }
-            }
-        }
-        return $grouped;
     }
 
     protected function _getAlertsFromSource($userId, $fetchMode, array $fetchOptions = array())
     {
+        $visitor = XenForo_Visitor::getInstance();
+
         $summarizeThreshold = 4; // $viewingUser['summarizeAlertThreshold']
         $originalLimit = 0;
         $this->standardizeViewingUserReference($viewingUser);
@@ -134,7 +110,8 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             $viewingUser['alerts_unread'] > 25 &&
             (!isset($fetchOptions['page']) || $fetchOptions['page'] == 0))
         {
-            $fetchMode = static::FETCH_MODE_RECENT;
+            $fetchMode = static::FETCH_MODE_ALL;
+            //$fetchMode = static::FETCH_MODE_RECENT;
             $summarize = true;
             $fetchOptions['page'] = 0;
             $originalLimit = 25;
@@ -151,7 +128,9 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             $fetchOptions['page'] = 0;
             $fetchOptions['perPage'] = 25;
         }
-
+//$this->_getDb()->query("delete from xf_user_alert where summerize_id is null and action like '%_summary';");
+//$this->_getDb()->query("update xf_user_alert set view_date = 0, summerize_id = null;");
+//$this->_getDb()->query("update xf_user set alerts_unread = (select count(*) from xf_user_alert where xf_user_alert.alerted_user_id = xf_user.user_id and view_date = 0);");
         $limitOptions = $this->prepareLimitFetchOptions($fetchOptions);
 
         $alerts = $this->fetchAllKeyed($this->limitQueryResults(
@@ -173,77 +152,152 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         if ($summarize)
         {
             $oldAlerts = $alerts;
-            $ungroupedAlerts = array();
-            $groupedAlerts = array();
+            $outputAlerts = array();
             $db = $this->_getDb();
             // build the list of handlers at once, and exclude based
             $handlers = $this->getAlertHandlers();
             foreach ($handlers AS $key => $handler)
             {
                 if (!is_callable(array($handler, 'canSummarize')) ||
+                    !is_callable(array($handler, 'consolidateAlert')) ||
                     !is_callable(array($handler, 'summarizeAlerts')))
                 {
                     unset($handlers[$key]);
                 }
             }
 
+            $userHandler = empty($handlers['user']) ? null : $handlers['user'];
+
             // collect alerts into groupings by content/id
             $groupedContentAlerts = array();
             $groupedUserAlerts = array();
+            $groupedAlerts = false;
             foreach ($alerts AS $id => $item)
             {
                 if ($item['view_date'] ||
                     empty($handlers[$item['content_type']]) ||
                     $this->endswith($item['action'], '_summary'))
                 {
-                    $ungroupedAlerts[$id] = $item;
+                    $outputAlerts[$id] = $item;
                     continue;
                 }
                 $handler = $handlers[$item['content_type']];
                 if (!$handler->canSummarize($item))
                 {
-                    $ungroupedAlerts[$id] = $item;
+                    $outputAlerts[$id] = $item;
                     continue;
                 }
-                $groupedContentAlerts[$item['content_type']][$item['content_id']][] = $item;
-                $groupedUserAlerts[$item['user_id']][$item['content_type']][$item['content_id']][] = $item;
+
+                $contentType = $item['content_type'];
+                $contentId = $item['content_id'];
+                if ($handler->consolidateAlert($contentType, $contentId, $item))
+                {
+                    $groupedContentAlerts[$contentType][$contentId][$id] = $item;
+
+                    if ($userHandler->canSummarize($item))
+                    {
+                        if (!isset($groupedUserAlerts[$item['user_id']]))
+                        {
+                            $groupedUserAlerts[$item['user_id']] = array('c' => 0, 'd' => array());
+                        }
+                        $groupedUserAlerts[$item['user_id']]['c'] += 1;
+                        $groupedUserAlerts[$item['user_id']]['d'][$contentType][$contentId][$id] = $item;
+                    }
+                }
+                else
+                {
+                    $outputAlerts[$id] = $item;
+                }
             }
 
-            // determine what can be summerised by various types. These require explicit support (ie a template)
+            // determine what can be summerised by content types. These require explicit support (ie a template)
             $grouped = 0;
-            $grouped += $this->groupAlerts($handlers, $summarizeThreshold, $groupedContentAlerts, $groupedAlerts, $ungroupedAlerts, 'content');
-
-            foreach ($groupedUserAlerts AS $senderUserId => &$userGroupedAlerts)
+            foreach ($groupedContentAlerts AS $contentType => &$contentIds)
             {
-                $grouped += $this->groupAlerts($handlers, $summarizeThreshold, $userGroupedAlerts, $groupedAlerts, $ungroupedAlerts, 'user');
+                $handler = $handlers[$contentType];
+                foreach ($contentIds AS $contentId => $alertGrouping)
+                {
+                    if ($this->insertSummaryAlert($handler, $summarizeThreshold, $contentType, $contentId, $alertGrouping, $grouped, $outputAlerts, 'content', 0))
+                    {
+                        unset($contentIds[$contentId]);
+                        $groupedAlerts = true;
+                    }
+                }
+            }
+            // see if we can group some alert by user (requires deap knowledge of most content types and the template)
+            if ($userHandler)
+            {
+                foreach ($groupedUserAlerts AS $senderUserId => &$perUserAlerts)
+                {
+                    if (!$summarizeThreshold || $perUserAlerts['c'] < $summarizeThreshold)
+                    {
+                        unset($groupedUserAlerts[$senderUserId]);
+                        continue;
+                    }
+
+                    $userAlertGrouping = array();
+                    foreach ($perUserAlerts['d'] AS $contentType => &$contentIds)
+                    {
+                        foreach ($contentIds AS $contentId => $alertGrouping)
+                        {
+                            if (empty($groupedContentAlerts[$contentType][$contentId]))
+                            {
+                                unset($contentIds[$contentId]);
+                                continue;
+                            }
+                            $userAlertGrouping = array_merge($userAlertGrouping, $alertGrouping);
+                        }
+                        if (empty($contentIds))
+                        {
+                            unset($perUserAlerts['d'][$contentType]);
+                        }
+                    }
+                    if ($userAlertGrouping && $this->insertSummaryAlert($userHandler, $summarizeThreshold, 'user', $userId, $userAlertGrouping, $grouped, $outputAlerts, 'user', $senderUserId))
+                    {
+                        foreach ($perUserAlerts['d'] AS $contentType => &$contentIds)
+                        {
+                            foreach ($contentIds AS $contentId => $alertGrouping)
+                            {
+                                //unset($groupedContentAlerts[$contentType][$contentId]);
+                            }
+                        }
+                        unset($groupedUserAlerts[$senderUserId]);
+                        $groupedAlerts = true;
+                    }
+                }
+            }
+
+            // output ungrouped alerts
+            foreach ($groupedContentAlerts AS $contentType => &$contentIds)
+            {
+                foreach ($contentIds AS $contentId => $alertGrouping)
+                {
+                    foreach ($alertGrouping AS $alertId => $alert)
+                    {
+                        $outputAlerts[$alertId] = $alert;
+                    }
+                }
             }
 
             // update alert totals
             if ($groupedAlerts)
             {
-                $visitor = XenForo_Visitor::getInstance();
-                $visitor['alerts_unread'] = $db->fetchOne('
-                    SELECT COUNT(*)
-                    FROM xf_user_alert
-                    WHERE alerted_user_id = ? AND view_date = 0 '.$summerizeSQL.'
-                ', array($userId));
+                $visitor['alerts_unread'] = count($outputAlerts);
                 $db->query("
                     update xf_user
-                    set alerts_unread = GREATEST(0, cast(alerts_unread as signed) - ?)
+                    set alerts_unread = ?
                     where user_id = ?
-                ", array($grouped, $userId));
+                ", array($visitor['alerts_unread'], $userId));
             }
 
-            // merge the grouped & ungrouped alerts back together
-            $groupedAlerts = array_merge($ungroupedAlerts, $groupedAlerts);
-            uasort($groupedAlerts, function($a, $b) {
+            uasort($outputAlerts, function($a, $b) {
                 if ($a['event_date'] == $b['event_date'])
                 {
                     return ($a['alert_id'] < $b['alert_id']) ? 1 : -1;
                 }
                 return ($a['event_date'] < $b['event_date']) ? 1 : -1;
             });
-            $alerts = $groupedAlerts;
+            $alerts = $outputAlerts;
 
             // sanity check
             if ($originalLimit && count($alerts) > $originalLimit)
