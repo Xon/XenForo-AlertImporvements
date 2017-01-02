@@ -110,8 +110,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             $viewingUser['alerts_unread'] > 25 &&
             (!isset($fetchOptions['page']) || $fetchOptions['page'] == 0))
         {
-            $fetchMode = static::FETCH_MODE_ALL;
-            //$fetchMode = static::FETCH_MODE_RECENT;
+            $fetchMode = static::FETCH_MODE_RECENT;
             $summarize = true;
             $fetchOptions['page'] = 0;
             $originalLimit = 25;
@@ -128,9 +127,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             $fetchOptions['page'] = 0;
             $fetchOptions['perPage'] = 25;
         }
-//$this->_getDb()->query("delete from xf_user_alert where summerize_id is null and action like '%_summary';");
-//$this->_getDb()->query("update xf_user_alert set view_date = 0, summerize_id = null;");
-//$this->_getDb()->query("update xf_user set alerts_unread = (select count(*) from xf_user_alert where xf_user_alert.alerted_user_id = xf_user.user_id and view_date = 0);");
+
         $limitOptions = $this->prepareLimitFetchOptions($fetchOptions);
 
         $alerts = $this->fetchAllKeyed($this->limitQueryResults(
@@ -258,7 +255,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                         {
                             foreach ($contentIds AS $contentId => $alertGrouping)
                             {
-                                //unset($groupedContentAlerts[$contentType][$contentId]);
+                                unset($groupedContentAlerts[$contentType][$contentId]);
                             }
                         }
                         unset($groupedUserAlerts[$senderUserId]);
@@ -282,7 +279,13 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             // update alert totals
             if ($groupedAlerts)
             {
-                $visitor['alerts_unread'] = count($outputAlerts);
+                //$visitor['alerts_unread'] = count($outputAlerts);
+                $visitor = XenForo_Visitor::getInstance();
+                $visitor['alerts_unread'] = $db->fetchOne('
+                    SELECT COUNT(*)
+                    FROM xf_user_alert
+                    WHERE alerted_user_id = ? AND view_date = 0 '.$summerizeSQL.'
+                ', array($userId));
                 $db->query("
                     update xf_user
                     set alerts_unread = ?
