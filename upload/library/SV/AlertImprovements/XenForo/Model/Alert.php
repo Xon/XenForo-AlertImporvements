@@ -248,15 +248,11 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                         {
                             foreach ($alertGrouping AS $id => $alert)
                             {
-                                $contentType = $alert['content_type'];
-                                $contentId = $alert['content_id'];
-                                $handler = $handlers[$contentType];
-                                if ($handler->consolidateAlert($contentType, $contentId, $alert))
+                                if (isset($groupedContentAlerts[$contentType][$contentId][$id]))
                                 {
-                                    if (isset($groupedContentAlerts[$contentType][$contentId][$id]))
-                                    {
-                                        $userAlertGrouping[$id] = $alert;
-                                    }
+                                    $alert['content_type_map'] = $contentType;
+                                    $alert['content_id_map'] = $contentId;
+                                    $userAlertGrouping[$id] = $alert;
                                 }
                             } 
                         }
@@ -265,13 +261,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                     {
                         foreach ($userAlertGrouping AS $id => $alert)
                         {
-                            $contentType = $alert['content_type'];
-                            $contentId = $alert['content_id'];
-                            $handler = $handlers[$contentType];
-                            if ($handler->consolidateAlert($contentType, $contentId, $alert))
-                            {
-                                unset($groupedContentAlerts[$contentType][$contentId][$id]);
-                            }
+                            unset($groupedContentAlerts[$alert['content_type_map']][$alert['content_id_map']][$id]);
                         }
                         $groupedAlerts = true;
                     }
