@@ -62,6 +62,7 @@ abstract class SV_AlertImprovements_Helper
         else
         {
             $summaryAlert['extra_data']['likes']['post'] = count($alerts);
+
         }
         return $summaryAlert;
     }
@@ -92,7 +93,18 @@ abstract class SV_AlertImprovements_Helper
                     }
                 }
                 $item['extra']['ratings'] = $sortedRatings;
-
+                unset($item['extra']['likes']['post']);
+            }
+        }
+        if (isset($item['extra']['likes']))
+        {
+            //x_of_posts
+            //x_of_report_comments
+            //x_of_conversation_messages
+            $item['extra']['likesPhrase'] = array();
+            foreach($item['extra']['likes'] as $contentType => $count)
+            {
+                $item['extra']['likesPhrase'][$contentType] = new XenForo_Phrase("x_of_{$contentType}s", array('count' => $count));
             }
         }
         return $item;

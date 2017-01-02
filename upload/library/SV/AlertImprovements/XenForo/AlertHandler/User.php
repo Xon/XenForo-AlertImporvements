@@ -45,4 +45,14 @@ class SV_AlertImprovements_XenForo_AlertHandler_User extends XFCP_SV_AlertImprov
 
         return SV_AlertImprovements_Helper::prepareRateSummary($item, $viewingUser);
     }
+
+    protected function _prepareLike_summary(array $item, array $viewingUser)
+    {
+        if (is_callable('parent::_prepareLike_summary'))
+        {
+            $item = parent::_prepareLike_summary($item, $viewingUser);
+        }
+
+        return SV_AlertImprovements_Helper::prepareRateSummary($item, $viewingUser);
+    }
 }
