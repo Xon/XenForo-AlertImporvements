@@ -106,6 +106,26 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         return true;
     }
 
+    protected function getSummarizeLock($userId)
+    {
+        $db = $this->_getDb();
+        if ($userId &&
+            $db->fetchOne("select get_lock(?, ?)", array('alertSummarize_'.$userId, 0.01)))
+        {
+            return $userId;
+        }
+        return false;
+    }
+
+    protected function releaseSummarizeLock($userId)
+    {
+        if ($userId)
+        {
+            $db = $this->_getDb();
+            $db->fetchOne("select release_lock(?)", array('alertSummarize_'.$userId));
+        }
+    }
+
     protected function _getAlertsFromSource($userId, $fetchMode, array $fetchOptions = array())
     {
         $visitor = XenForo_Visitor::getInstance();
@@ -113,50 +133,58 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         $summarizeThreshold = 4; // $viewingUser['summarizeAlertThreshold']
         $originalLimit = 0;
         $this->standardizeViewingUserReference($viewingUser);
-        $summarize = false;
+        $summerizeToken = false;
         // determine is summarize needs to occur
         if (($fetchMode == static::FETCH_MODE_POPUP || $fetchMode == static::FETCH_MODE_RECENT) &&
             $viewingUser['alerts_unread'] > 25 &&
             (!isset($fetchOptions['page']) || $fetchOptions['page'] == 0))
         {
-            $fetchMode = static::FETCH_MODE_RECENT;
-            $summarize = true;
-            $fetchOptions['page'] = 0;
-            $originalLimit = 25;
-            unset($fetchOptions['perPage']);
+            $summerizeToken = $this->getSummarizeLock($userId);
         }
-
-        // need to replace the entire query...
-        $summerizeSQL = SV_AlertImprovements_Globals::$summerizationAlerts ? 'AND summerize_id is null' : '';
-
-        //$alerts = parent::_getAlertsFromSource($userId, $fetchMode, $fetchOptions);
-        // *********************
-        if ($fetchMode == self::FETCH_MODE_POPUP)
+        try
         {
-            $fetchOptions['page'] = 0;
-            $fetchOptions['perPage'] = 25;
-        }
+            if ($summerizeToken)
+            {
+                $fetchMode = static::FETCH_MODE_RECENT;
+                $fetchOptions['page'] = 0;
+                $originalLimit = 25;
+                unset($fetchOptions['perPage']);
+            }
 
-        $limitOptions = $this->prepareLimitFetchOptions($fetchOptions);
+            // need to replace the entire query...
+            $summerizeSQL = SV_AlertImprovements_Globals::$summerizationAlerts ? 'AND summerize_id is null' : '';
 
-        $alerts = $this->fetchAllKeyed($this->limitQueryResults(
-            '
-                SELECT
-                    alert.*,
-                    user.gender, user.avatar_date, user.gravatar,
-                    IF (user.user_id IS NULL, alert.username, user.username) AS username
-                FROM xf_user_alert AS alert
-                LEFT JOIN xf_user AS user ON
-                    (user.user_id = alert.user_id)
-                WHERE alert.alerted_user_id = ? '.$summerizeSQL.'
-                    AND (alert.view_date = 0 OR alert.view_date > ?)
-                ORDER BY event_date DESC
-            ', $limitOptions['limit'], $limitOptions['offset']
-        ), 'alert_id', array($userId, $this->_getFetchModeDateCut($fetchMode)));
-        // *********************
+            //$alerts = parent::_getAlertsFromSource($userId, $fetchMode, $fetchOptions);
+            // *********************
+            if ($fetchMode == self::FETCH_MODE_POPUP)
+            {
+                $fetchOptions['page'] = 0;
+                $fetchOptions['perPage'] = 25;
+            }
 
-        if ($summarize)
-        {
+            $limitOptions = $this->prepareLimitFetchOptions($fetchOptions);
+
+            $alerts = $this->fetchAllKeyed($this->limitQueryResults(
+                '
+                    SELECT
+                        alert.*,
+                        user.gender, user.avatar_date, user.gravatar,
+                        IF (user.user_id IS NULL, alert.username, user.username) AS username
+                    FROM xf_user_alert AS alert
+                    LEFT JOIN xf_user AS user ON
+                        (user.user_id = alert.user_id)
+                    WHERE alert.alerted_user_id = ? '.$summerizeSQL.'
+                        AND (alert.view_date = 0 OR alert.view_date > ?)
+                    ORDER BY event_date DESC
+                ', $limitOptions['limit'], $limitOptions['offset']
+            ), 'alert_id', array($userId, $this->_getFetchModeDateCut($fetchMode)));
+            // *********************
+
+            if (!$summerizeToken)
+            {
+                return $alerts;
+            }
+
             $oldAlerts = $alerts;
             $outputAlerts = array();
             $db = $this->_getDb();
@@ -254,7 +282,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                                     $alert['content_id_map'] = $contentId;
                                     $userAlertGrouping[$id] = $alert;
                                 }
-                            } 
+                            }
                         }
                     }
                     if ($userAlertGrouping && $this->insertSummaryAlert($userHandler, $summarizeThreshold, 'user', $userId, $userAlertGrouping, $grouped, $outputAlerts, 'user', $senderUserId))
@@ -311,6 +339,10 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             {
                 $alerts = array_slice($alerts, 0, $originalLimit, true);
             }
+        }
+        finally
+        {
+            $this->releaseSummarizeLock($summerizeToken);
         }
 
         return $alerts;
