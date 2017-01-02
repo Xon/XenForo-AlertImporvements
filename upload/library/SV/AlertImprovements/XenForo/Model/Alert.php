@@ -55,7 +55,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         {
             return false;
         }
-        $lastAlert = end($alertGrouping);
+        $lastAlert = reset($alertGrouping);
 
         // inject a grouped alert with the same content type/id, but with a different action
         $summaryAlert = array(
