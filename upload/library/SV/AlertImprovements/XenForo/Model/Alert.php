@@ -80,9 +80,18 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         $dw->save();
         $summaryAlert = $dw->getMergedData();
         // bits required for alert processing
-        $summaryAlert['gender'] = null;
-        $summaryAlert['avatar_date'] = null;
-        $summaryAlert['gravatar'] = null;
+        if ($senderUserId)
+        {
+            $summaryAlert['gender'] = $lastAlert['gender'];
+            $summaryAlert['avatar_date'] = $lastAlert['avatar_date'];
+            $summaryAlert['gravatar'] = $lastAlert['gravatar'];
+        }
+        else
+        {
+            $summaryAlert['gender'] = null;
+            $summaryAlert['avatar_date'] = null;
+            $summaryAlert['gravatar'] = null;
+        }
         // hide the non-summary alerts
         $db = $this->_getDb();
         $stmt = $db->query('
