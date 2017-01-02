@@ -237,28 +237,33 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                     {
                         foreach ($contentIds AS $contentId => $alertGrouping)
                         {
-                            if (empty($groupedContentAlerts[$contentType][$contentId]))
+                            foreach ($alertGrouping AS $id => $alert)
                             {
-                                unset($contentIds[$contentId]);
-                                continue;
-                            }
-                            $userAlertGrouping = array_merge($userAlertGrouping, $alertGrouping);
-                        }
-                        if (empty($contentIds))
-                        {
-                            unset($perUserAlerts['d'][$contentType]);
+                                $contentType = $alert['content_type'];
+                                $contentId = $alert['content_id'];
+                                $handler = $handlers[$contentType];
+                                if ($handler->consolidateAlert($contentType, $contentId, $alert))
+                                {
+                                    if (isset($groupedContentAlerts[$contentType][$contentId][$id]))
+                                    {
+                                        $userAlertGrouping[$id] = $alert;
+                                    }
+                                }
+                            } 
                         }
                     }
                     if ($userAlertGrouping && $this->insertSummaryAlert($userHandler, $summarizeThreshold, 'user', $userId, $userAlertGrouping, $grouped, $outputAlerts, 'user', $senderUserId))
                     {
-                        foreach ($perUserAlerts['d'] AS $contentType => &$contentIds)
+                        foreach ($userAlertGrouping AS $id => $alert)
                         {
-                            foreach ($contentIds AS $contentId => $alertGrouping)
+                            $contentType = $alert['content_type'];
+                            $contentId = $alert['content_id'];
+                            $handler = $handlers[$contentType];
+                            if ($handler->consolidateAlert($contentType, $contentId, $alert))
                             {
-                                unset($groupedContentAlerts[$contentType][$contentId]);
+                                unset($groupedContentAlerts[$contentType][$contentId][$id]);
                             }
                         }
-                        unset($groupedUserAlerts[$senderUserId]);
                         $groupedAlerts = true;
                     }
                 }
