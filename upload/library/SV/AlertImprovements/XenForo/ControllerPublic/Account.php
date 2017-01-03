@@ -30,6 +30,65 @@ class SV_AlertImprovements_XenForo_ControllerPublic_Account extends XFCP_SV_Aler
         return $response;
     }
 
+    public function actionAlert()
+    {
+        $visitor = XenForo_Visitor::getInstance()->toArray();
+        $alertModel = $this->_getAlertModel();
+
+        $page = $this->_input->filterSingle('page', XenForo_Input::UINT);
+        $alertId = $this->_input->filterSingle('alert_id', XenForo_Input::UINT);
+        $skip_mark_read = $this->_input->filterSingle('skip_mark_read', XenForo_Input::UINT);
+
+        if (!$skip_mark_read && $page == 0)
+        {
+            $alert = $alertModel->changeAlertStatus($visitor['user_id'], $alertId, true);
+        }
+        else
+        {
+            $alert = $alertModel->getAlertById($alertId);
+            if ($alert['alerted_user_id'] != $visitor['user_id'])
+            {
+                $alert = false;
+            }
+        }
+        if ($alert)
+        {
+            $alert = $alertModel->preparedAlertForUser($visitor['user_id'], $alert, $visitor);
+        }
+
+        if (empty($alert))
+        {
+            return $this->responseNoPermission();
+        }
+
+        $perPage = XenForo_Application::get('options')->alertsPerPage;
+        SV_AlertImprovements_Globals::$summerizationAlerts = $alert['alert_id'];
+        $alertResults = $alertModel->getAlertsForUser(
+            $visitor['user_id'],
+            XenForo_Model_Alert::FETCH_MODE_RECENT,
+            array(
+                'page' => $page,
+                'perPage' => $perPage,
+            )
+        );
+
+        $pageNavParams = array();
+        $pageNavParams['alert_id'] = $alert['alert_id'];
+
+        $viewParams = array(
+            'summaryAlert' => $alert,
+            'alerts' => $alertResults['alerts'],
+            'alertHandlers' => $alertResults['alertHandlers'],
+
+            'pageNavParams' => $pageNavParams,
+            'page' => $page,
+            'perPage' => $perPage,
+            'totalAlerts' => $alertModel->countAlertsForUser($visitor['user_id'])
+        );
+
+        return $this->responseView('SV_AlertImprovements_ViewPublic_Account_SummaryAlerts', 'account_alerts_summary', $viewParams);
+    }
+
     public function actionUnreadAlert()
     {
         $alertModel = $this->_getAlertModel();

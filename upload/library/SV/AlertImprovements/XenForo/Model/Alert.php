@@ -8,15 +8,30 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         parent::markAllAlertsReadForUser($userId, $time);
     }
 
+    protected function getSummerizeSQL()
+    {
+        if (SV_AlertImprovements_Globals::$summerizationAlerts)
+        {
+            if (SV_AlertImprovements_Globals::$summerizationAlerts === true)
+            {
+                return ' AND summerize_id is null ';
+            }
+            else
+            {
+                return ' AND summerize_id = ' . $this->_getDb()->quote(SV_AlertImprovements_Globals::$summerizationAlerts).' ';
+            }
+        }
+        return '';
+    }
+
     public function countAlertsForUser($userId)
     {
         // need to replace the entire query...
-        $summerizeSQL = SV_AlertImprovements_Globals::$summerizationAlerts ? 'AND summerize_id is null' : '';
         // *********************
         return $this->_getDb()->fetchOne('
             SELECT COUNT(*)
             FROM xf_user_alert
-            WHERE alerted_user_id = ? '.$summerizeSQL.'
+            WHERE alerted_user_id = ? '. $this->getSummerizeSQL() .'
                 AND (view_date = 0 OR view_date > ?)
         ', array($userId, $this->_getFetchModeDateCut(self::FETCH_MODE_RECENT)));
         // *********************
@@ -152,8 +167,6 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             }
 
             // need to replace the entire query...
-            $summerizeSQL = SV_AlertImprovements_Globals::$summerizationAlerts ? 'AND summerize_id is null' : '';
-
             //$alerts = parent::_getAlertsFromSource($userId, $fetchMode, $fetchOptions);
             // *********************
             if ($fetchMode == self::FETCH_MODE_POPUP)
@@ -173,7 +186,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                     FROM xf_user_alert AS alert
                     LEFT JOIN xf_user AS user ON
                         (user.user_id = alert.user_id)
-                    WHERE alert.alerted_user_id = ? '.$summerizeSQL.'
+                    WHERE alert.alerted_user_id = ? '. $this->getSummerizeSQL() .'
                         AND (alert.view_date = 0 OR alert.view_date > ?)
                     ORDER BY event_date DESC
                 ', $limitOptions['limit'], $limitOptions['offset']
@@ -396,14 +409,13 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                 {
                     if (XenForo_Db::inTransaction($db))
                     {
-                        $summerizeSQL = SV_AlertImprovements_Globals::$summerizationAlerts ? 'AND summerize_id is null' : '';
                         // why the hell are we inside a transaction?
                         XenForo_Error::logException($e, false, 'Unexpected transaction; ');
                         $rowsAffected = 0;
                         $visitor['alerts_unread'] = $db->fetchOne('
                             SELECT COUNT(*)
                             FROM xf_user_alert
-                            WHERE alerted_user_id = ? AND view_date = 0 '.$summerizeSQL,
+                            WHERE alerted_user_id = ? AND view_date = 0 '. $this->getSummerizeSQL(),
                         array($userId));
                     }
                     else
@@ -432,7 +444,6 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
     {
         $db = $this->_getDb();
 
-        $increment = $readStatus ? -1 : 1;
         XenForo_Db::beginTransaction($db);
 
         $alert = $db->fetchRow("
@@ -444,7 +455,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         if (empty($alert) || $readStatus == ($alert['view_date'] != 0))
         {
             @XenForo_Db::rollback($db);
-            return false;
+            return $alert;
         }
 
         if ($readStatus)
@@ -478,10 +489,40 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
 
         XenForo_Db::commit($db);
 
+        if ($readStatus)
+        {
+            $alert['view_date'] = XenForo_Application::$time;
+            $increment = -1;
+        }
+        else
+        {
+            $alert['view_date'] = 0;
+            $increment = 1;
+        }
+
         $visitor = XenForo_Visitor::getInstance();
         if ($visitor['user_id'] == $userId)
         {
             $visitor['alerts_unread'] += $increment;
         }
+
+        return $alert;
+    }
+
+    public function preparedAlertForUser($userId, $alert, array $viewingUser = null)
+    {
+        $this->standardizeViewingUserReference($viewingUser);
+
+        $alert['gender'] = $viewingUser['gender'];
+        $alert['avatar_date'] = $viewingUser['avatar_date'];
+        $alert['gravatar'] = $viewingUser['gravatar'];
+        $alerts = array($alert);
+
+        $alerts = $this->_getContentForAlerts($alerts, $userId, $viewingUser);
+        $alerts = $this->_getViewableAlerts($alerts, $viewingUser);
+
+        $alerts = $this->prepareAlerts($alerts, $viewingUser);
+
+        return reset($alerts);
     }
 }
