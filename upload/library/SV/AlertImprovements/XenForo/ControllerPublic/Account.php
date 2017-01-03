@@ -35,7 +35,7 @@ class SV_AlertImprovements_XenForo_ControllerPublic_Account extends XFCP_SV_Aler
         $alertModel = $this->_getAlertModel();
         $alertId = $this->_input->filterSingle('alert_id', XenForo_Input::UINT);
 
-        $alertModel->markUnread(XenForo_Visitor::getUserId(), $alertId);
+        $alertModel->changeAlertStatus(XenForo_Visitor::getUserId(), $alertId, false);
 
         $params = array(
             'skip_mark_read' => true,

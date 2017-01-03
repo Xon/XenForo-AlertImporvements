@@ -428,30 +428,60 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         }
     }
 
-    public function markUnread($userId, $alertId)
+    public function changeAlertStatus($userId, $alertId, $readStatus)
     {
         $db = $this->_getDb();
 
+        $increment = $readStatus ? -1 : 1;
         XenForo_Db::beginTransaction($db);
 
-        $db->query("
-            update xf_user
-            set alerts_unread = LEAST(alerts_unread + 1, 65535)
-            where user_id = ?
-        ", $userId);
-
-        $db->query("
-            update xf_user_alert
-            set view_date = 0
+        $alert = $db->fetchRow("
+            SELECT *
+            FROM xf_user_alert
             where alerted_user_id = ? and alert_id = ?
         ", array($userId, $alertId));
+
+        if (empty($alert) || $readStatus == ($alert['view_date'] != 0))
+        {
+            @XenForo_Db::rollback($db);
+            return false;
+        }
+
+        if ($readStatus)
+        {
+            $db->query("
+                update xf_user
+                set alerts_unread = GREATEST(0, cast(alerts_unread as signed) - 1)
+                where user_id = ?
+            ", $userId);
+
+            $db->query("
+                update xf_user_alert
+                set view_date = ?
+                where alerted_user_id = ? and alert_id = ?
+            ", array(XenForo_Application::$time, $userId, $alertId));
+        }
+        else
+        {
+            $db->query("
+                update xf_user
+                set alerts_unread = LEAST(alerts_unread + 1, 65535)
+                where user_id = ?
+            ", $userId);
+
+            $db->query("
+                update xf_user_alert
+                set view_date = 0
+                where alerted_user_id = ? and alert_id = ?
+            ", array($userId, $alertId));
+        }
 
         XenForo_Db::commit($db);
 
         $visitor = XenForo_Visitor::getInstance();
         if ($visitor['user_id'] == $userId)
         {
-            $visitor['alerts_unread'] += 1;
+            $visitor['alerts_unread'] += $increment;
         }
     }
 }
