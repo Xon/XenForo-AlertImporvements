@@ -99,18 +99,15 @@
 ]]></template>
     <template title="alert_post_rate_summary" version_id="1040000" version_string="1.4.0"><![CDATA[<xen:set var="$ratingString">
 <xen:foreach loop="$extra.ratings" key="$key" value="$rating">
-	<xen:set var="$ratingIcon"><xen:if is="{$rating.name}"><xen:if is="{$rating.sprite_mode}"><img src="styles/default/xenforo/clear.png" alt="" style="background: url('styles/dark/ratings/{$rating.name}') no-repeat {$rating.sprite_params.x}px {$rating.sprite_params.y}px; width: {$rating.sprite_params.w}px; height: {$rating.sprite_params.h}px; vertical-align: middle;" /><xen:else /><img src="styles/dark/ratings/{$rating.name}" alt="" style="vertical-align:middle" /></xen:if></xen:if></xen:set>
-	{xen:raw $ratingIcon} {$rating.count}
+	<xen:set var="$ratingIcon"><xen:if is="{$rating.name}"><xen:if is="{$rating.sprite_mode}"><img src="styles/default/xenforo/clear.png" alt="{$rating.title}" title="{$rating.title}" style="background: url('styles/dark/ratings/{$rating.name}') no-repeat {$rating.sprite_params.x}px {$rating.sprite_params.y}px; width: {$rating.sprite_params.w}px; height: {$rating.sprite_params.h}px; vertical-align: middle;" /><xen:else /><img src="styles/dark/ratings/{$rating.name}" alt="{$rating.title}" title="{$rating.title}"  style="vertical-align:middle" /></xen:if></xen:if></xen:set>
+	{xen:raw $ratingIcon} x <strong>{xen:number $rating.count}</strong>
 </xen:foreach>
 </xen:set>
 
 {xen:phrase your_post_in_the_thread_y_has_been_rated_x,
 	'ratings={xen:raw $ratingString}',
 	'title=<a href="{xen:link posts, $content}" class="PopupItemLink">{xen:helper threadPrefix, $content}{$content.title}</a>'}
-
-<xen:if is="{$extra.likesPhrase}">
-<xen:include template="alert_user_like_summary" />
-</xen:if>]]></template>
+]]></template>
     <template title="alert_user_like_summary" version_id="1040000" version_string="1.4.0"><![CDATA[<xen:set var="$likeString">
 <xen:foreach loop="$extra.likes" key="$contentType" value="$count">
 	{$extra.likesPhrase.{$contentType}}
@@ -122,15 +119,20 @@
 	'likedcontent={xen:raw $likeString}'}]]></template>
     <template title="alert_user_rate_summary" version_id="1040000" version_string="1.4.0"><![CDATA[<xen:set var="$ratingString">
 <xen:foreach loop="$extra.ratings" key="$key" value="$rating">
-	<xen:set var="$ratingIcon"><xen:if is="{$rating.name}"><xen:if is="{$rating.sprite_mode}"><img src="styles/default/xenforo/clear.png" alt="" style="background: url('styles/dark/ratings/{$rating.name}') no-repeat {$rating.sprite_params.x}px {$rating.sprite_params.y}px; width: {$rating.sprite_params.w}px; height: {$rating.sprite_params.h}px; vertical-align: middle;" /><xen:else /><img src="styles/dark/ratings/{$rating.name}" alt="" style="vertical-align:middle" /></xen:if></xen:if></xen:set>
-	{xen:raw $ratingIcon} {$rating.count}
+	<xen:set var="$ratingIcon"><xen:if is="{$rating.name}"><xen:if is="{$rating.sprite_mode}"><img src="styles/default/xenforo/clear.png" alt="{$rating.title}" title="{$rating.title}" style="background: url('styles/dark/ratings/{$rating.name}') no-repeat {$rating.sprite_params.x}px {$rating.sprite_params.y}px; width: {$rating.sprite_params.w}px; height: {$rating.sprite_params.h}px; vertical-align: middle;" /><xen:else /><img src="styles/dark/ratings/{$rating.name}" alt="{$rating.title}" title="{$rating.title}"  style="vertical-align:middle" /></xen:if></xen:if></xen:set>
+	{xen:raw $ratingIcon} x <strong>{xen:number $rating.count}</strong>
 </xen:foreach>
 </xen:set>
+
 
 {xen:phrase x_post_y_rated_z,
 	'count={$extra.totalRatings}',
 	'name={xen:helper username, $user, 'subject'}',
-	'ratings={xen:raw $ratingString}'}]]></template>
+	'ratings={xen:raw $ratingString}'}
+	
+<xen:if is="{$extra.likesPhrase}">
+<xen:include template="alert_user_like_summary" />
+</xen:if>]]></template>
     <template title="SV_AlertImprovements_Alert_Preferences" version_id="1030000" version_string="1.3.0"><![CDATA[<li>
     <label for="ctrl_sv_alerts_page_skips_mark_read"><input type="checkbox" name="sv_alerts_page_skips_mark_read" value="1" id="ctrl_sv_alerts_page_skips_mark_read" {xen:checked "{$visitor.sv_alerts_page_skips_mark_read}"} />
         {xen:phrase sv_alert_page_skip_mark_read}
