@@ -147,7 +147,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             {
                 $fetchMode = static::FETCH_MODE_RECENT;
                 $fetchOptions['page'] = 0;
-                $originalLimit = 25;
+                $originalLimit = isset($fetchOptions['perPage']) ? $fetchOptions['perPage'] : 25;
                 unset($fetchOptions['perPage']);
             }
 
