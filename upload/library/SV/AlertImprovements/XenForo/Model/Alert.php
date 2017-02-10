@@ -20,25 +20,22 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
 
         $db = $this->_getDb();
         $options = XenForo_Application::getOptions();
-        // Do a select first to reduce the amount of rows that can be touched for the update. 
+        // Do a select first to reduce the amount of rows that can be touched for the update.
         // This hopefully reduces contention as must of the time it should just be a select, without any updates
-        if (true)//$options->sv_filterAlertContentIds)
+        $alertIds = $db->fetchCol("
+            select alert_id
+            from xf_user_alert
+            where alerted_user_id = ? and view_date = 0 and event_date < ? and content_type in(". $db->quote($contentType) .") and content_id in (". $db->quote($contentIds) .")
+        ", array($userId, XenForo_Application::$time));
+        if (empty($alertIds))
         {
-            $contentIds = $db->fetchCol("
-                select content_id
-                from xf_user_alert
-                where alerted_user_id = ? and view_date = 0 and event_date < ? and content_type in(". $db->quote($contentType) .") and content_id in (". $db->quote($contentIds) .")
-            ", array($userId, XenForo_Application::$time));
-            if (empty($contentIds))
-            {
-                return;
-            }
+            return;
         }
 
         $stmt = $db->query("
             update ignore xf_user_alert
             set view_date = ?
-            where alerted_user_id = ? and view_date = 0 and event_date < ? and content_type in(". $db->quote($contentType) .") and content_id in (". $db->quote($contentIds) .")
+            where view_date = 0 and alert_id in (". $db->quote($alertIds) .")
         ", array(XenForo_Application::$time, $userId, XenForo_Application::$time));
         $rowsAffected = $stmt->rowCount();
 
