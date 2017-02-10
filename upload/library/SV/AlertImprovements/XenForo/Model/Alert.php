@@ -36,7 +36,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             update ignore xf_user_alert
             set view_date = ?
             where view_date = 0 and alert_id in (". $db->quote($alertIds) .")
-        ", array(XenForo_Application::$time, $userId, XenForo_Application::$time));
+        ", array(XenForo_Application::$time));
         $rowsAffected = $stmt->rowCount();
 
         if ($rowsAffected)
