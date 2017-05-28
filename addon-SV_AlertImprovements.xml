@@ -166,13 +166,13 @@
 	'link=href="{xen:link account/alert, '', 'alert_id={$alert_id}'}" class="OverlayTrigger"',
 	'title=<a href="{xen:link posts, $content}" class="PopupItemLink">{xen:helper threadPrefix, $content}{$content.title}</a>'}
 ]]></template>
-    <template title="alert_user_like_summary" version_id="1040000" version_string="1.4.0"><![CDATA[<xen:set var="$likeString">
+    <template title="alert_user_like_summary" version_id="1040100" version_string="1.4.1"><![CDATA[<xen:set var="$likeString">
 <xen:foreach loop="$extra.likes" key="$contentType" value="$count">
 	{$extra.likesPhrase.{$contentType}}
 </xen:foreach>
 </xen:set>
 
-{xen:phrase sv_x_liked_y_content,
+{xen:phrase sv_x_liked_y_content_z_times,
 	'name={xen:helper username, $user, 'subject'}',
 	'link=href="{xen:link account/alert, '', 'alert_id={$alert_id}'}" class="PopupItemLink OverlayTrigger"',
 	'likedcontent={xen:raw $likeString}'}]]></template>
@@ -222,6 +222,9 @@
       <replace><![CDATA[$1
 <xen:if is="{$alert.view_date} or {$markedAlertsRead}">
 <a class="markAlertUnread" href="{xen:link 'account/unread-alert', '', 'alert_id={$alert.alert_id}'}"><span class="unreadLink">{xen:phrase sv_mark_unread}</span></a>
+</xen:if>
+<xen:if is="{$alert.isSummary}">
+<a class="unsummarizeAlert" href="{xen:link 'account/unsummarize-alert', '', 'alert_id={$alert.alert_id}'}"><span class="unreadLink">{xen:phrase sv_unsummarize_alert}</span></a>
 </xen:if>
 $2]]></replace>
     </modification>
