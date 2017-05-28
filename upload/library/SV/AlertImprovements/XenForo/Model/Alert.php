@@ -132,12 +132,19 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         ', array($summaryId));
 
         // Reset unread alerts counter
+        $increment = $stmt->rowCount();
         $this->_db->query('
             UPDATE xf_user SET
             alerts_unread = alerts_unread + ?
             WHERE user_id = ?
                 AND alerts_unread < 65535
-        ', array($stmt->rowCount(), $userId));
+        ', array($increment, $userId));
+
+        $visitor = XenForo_Visitor::getInstance();
+        if ($visitor['user_id'] == $userId)
+        {
+            $visitor['alerts_unread'] += $increment;
+        }
 
         // Delete summary alert
         $summaryAlert = $this->getAlertById($summaryId);
