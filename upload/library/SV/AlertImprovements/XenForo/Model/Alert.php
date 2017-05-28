@@ -121,6 +121,31 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         return true;
     }
 
+    public function insertUnsummarizedAlerts($userId, $summaryId)
+    {
+        // Make alerts visible
+        $db = $this->_getDb();
+        $stmt = $db->query('
+            UPDATE xf_user_alert
+            SET summerize_id = null, view_date = 0
+            WHERE summerize_id = ?
+        ', array($summaryId));
+
+        // Reset unread alerts counter
+        $this->_db->query('
+            UPDATE xf_user SET
+            alerts_unread = alerts_unread + ?
+            WHERE user_id = ?
+                AND alerts_unread < 65535
+        ', array($stmt->rowCount(), $userId));
+
+        // Delete summary alert
+        $summaryAlert = $this->getAlertById($summaryId);
+        $dw = XenForo_DataWriter::create('XenForo_DataWriter_Alert');
+        $dw->setExistingData($summaryAlert, true);
+        $dw->delete();
+    }
+
     protected function getSummarizeLock($userId)
     {
         $db = $this->_getDb();
@@ -149,10 +174,12 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         $originalLimit = 0;
         $this->standardizeViewingUserReference($viewingUser);
         $summerizeToken = false;
-        // determine is summarize needs to occur
+
+        // determine if summarize needs to occur
         if (($fetchMode == static::FETCH_MODE_POPUP || $fetchMode == static::FETCH_MODE_RECENT) &&
+            (!isset($fetchOptions['page']) || $fetchOptions['page'] == 0) &&
             $viewingUser['alerts_unread'] > 25 &&
-            (!isset($fetchOptions['page']) || $fetchOptions['page'] == 0))
+            !SV_AlertImprovements_Globals::$explictSkipSummarize)
         {
             $summerizeToken = $this->getSummarizeLock($userId);
         }
@@ -329,7 +356,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                 $visitor['alerts_unread'] = $db->fetchOne('
                     SELECT COUNT(*)
                     FROM xf_user_alert
-                    WHERE alerted_user_id = ? AND view_date = 0 '.$summerizeSQL.'
+                    WHERE alerted_user_id = ? AND view_date = 0 '. $this->getSummerizeSQL() .'
                 ', array($userId));
                 $db->query("
                     update xf_user

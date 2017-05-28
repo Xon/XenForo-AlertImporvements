@@ -13,6 +13,11 @@ class SV_AlertImprovements_XenForo_ControllerPublic_Account extends XFCP_SV_Aler
             $_POST['skip_mark_read'] = 1;
         }
 
+        if (isset($_REQUEST['skip_summarize']) && $_REQUEST['skip_summarize'])
+        {
+            SV_AlertImprovements_Globals::$explictSkipSummarize = true;
+        }
+
         $response = parent::actionAlerts();
         if ($response instanceof XenForo_ControllerResponse_View)
         {
@@ -98,6 +103,24 @@ class SV_AlertImprovements_XenForo_ControllerPublic_Account extends XFCP_SV_Aler
 
         $params = array(
             'skip_mark_read' => true,
+        );
+
+        return $this->responseRedirect(
+            XenForo_ControllerResponse_Redirect::SUCCESS,
+            XenForo_Link::buildPublicLink('account/alerts', array(), $params)
+        );
+    }
+
+    public function actionUnsummarizeAlert()
+    {
+        $alertModel = $this->_getAlertModel();
+        $summaryId = $this->_input->filterSingle('alert_id', XenForo_Input::UINT);
+
+        $alertModel->insertUnsummarizedAlerts(XenForo_Visitor::getUserId(), $summaryId, false);
+
+        $params = array(
+            'skip_mark_read' => true,
+            'skip_summarize' => true
         );
 
         return $this->responseRedirect(

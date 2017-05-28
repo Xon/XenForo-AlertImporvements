@@ -40,6 +40,8 @@ class SV_AlertImprovements_XenForo_AlertHandler_DiscussionMessage_Post extends X
             $item = parent::_prepareRate_summary($item, $viewingUser);
         }
 
+        $item["isSummary"] = true;
+
         return SV_AlertImprovements_Helper::prepareRateSummary($item, $viewingUser);
     }
 }

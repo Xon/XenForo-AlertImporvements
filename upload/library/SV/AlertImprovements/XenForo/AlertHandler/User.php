@@ -43,6 +43,8 @@ class SV_AlertImprovements_XenForo_AlertHandler_User extends XFCP_SV_AlertImprov
             $item = parent::_prepareRate_summary($item, $viewingUser);
         }
 
+        $item["isSummary"] = true;
+
         return SV_AlertImprovements_Helper::prepareRateSummary($item, $viewingUser);
     }
 
@@ -52,6 +54,8 @@ class SV_AlertImprovements_XenForo_AlertHandler_User extends XFCP_SV_AlertImprov
         {
             $item = parent::_prepareLike_summary($item, $viewingUser);
         }
+
+        $item["isSummary"] = true;
 
         return SV_AlertImprovements_Helper::prepareRateSummary($item, $viewingUser);
     }
