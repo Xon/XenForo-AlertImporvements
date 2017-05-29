@@ -7,15 +7,15 @@ class SV_AlertImprovements_XenForo_ControllerPublic_Account extends XFCP_SV_Aler
         $visitor = XenForo_Visitor::getInstance()->toArray();
 
         $explicitMarkAsRead = isset($_REQUEST['skip_mark_read']) && empty($_REQUEST['skip_mark_read']);
-
         if (!empty($visitor['sv_alerts_page_skips_mark_read']) && !$explicitMarkAsRead)
         {
             $_POST['skip_mark_read'] = 1;
         }
 
-        if (isset($_REQUEST['skip_summarize']) && $_REQUEST['skip_summarize'])
+        $explictSkipSummarize = isset($_REQUEST['skip_summarize']) && $_REQUEST['skip_summarize'];
+        if (!empty($visitor['sv_alerts_page_skips_summarize']) || $explictSkipSummarize)
         {
-            SV_AlertImprovements_Globals::$explictSkipSummarize = true;
+            SV_AlertImprovements_Globals::$skipSummarize = true;
         }
 
         $response = parent::actionAlerts();
@@ -129,10 +129,22 @@ class SV_AlertImprovements_XenForo_ControllerPublic_Account extends XFCP_SV_Aler
         );
     }
 
-    public function actionPreferencesSave()
+    public function actionAlertPreferencesSave()
     {
-        SV_AlertImprovements_Globals::$PublicAccountController = $this;
+        $settings = $this->_input->filter(array(
+            'sv_alerts_page_skips_mark_read' => XenForo_Input::UINT,
+            'sv_alerts_page_skips_summarize' => XenForo_Input::UINT,
+            'sv_alerts_summarize_threshold'  => XenForo_Input::UINT
+        ));
 
-        return parent::actionPreferencesSave();
+        $errors = array();
+        $this->_saveVisitorSettings($settings, $errors);
+
+        if (!empty($errors))
+        {
+            return $this->responseError($errors);
+        }
+
+        return parent::actionAlertPreferencesSave();
     }
 }
