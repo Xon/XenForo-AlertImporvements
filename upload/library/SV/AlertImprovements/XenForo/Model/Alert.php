@@ -175,11 +175,10 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
 
     protected function _getAlertsFromSource($userId, $fetchMode, array $fetchOptions = array())
     {
-        $visitor = XenForo_Visitor::getInstance();
-
-        $summarizeThreshold = 4; // $viewingUser['summarizeAlertThreshold']
-        $originalLimit = 0;
         $this->standardizeViewingUserReference($viewingUser);
+
+        $summarizeThreshold = isset($visitor['sv_alerts_summarize_threshold']) ? $visitor['sv_alerts_summarize_threshold'] : 4;
+        $originalLimit = 0;
         $summerizeToken = false;
 
         // determine if summarize needs to occur
@@ -358,8 +357,8 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             // update alert totals
             if ($groupedAlerts)
             {
-                //$visitor['alerts_unread'] = count($outputAlerts);
                 $visitor = XenForo_Visitor::getInstance();
+                //$visitor['alerts_unread'] = count($outputAlerts);
                 $visitor['alerts_unread'] = $db->fetchOne('
                     SELECT COUNT(*)
                     FROM xf_user_alert
