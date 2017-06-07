@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<addon addon_id="SV_AlertImprovements" title="Alert Improvements" version_string="1.4.1" version_id="1040100" url="https://xenforo.com/community/resources/alert-improvements-by-xon.4578/" install_callback_class="SV_AlertImprovements_Installer" install_callback_method="install" uninstall_callback_class="SV_AlertImprovements_Installer" uninstall_callback_method="uninstall">
+<addon addon_id="SV_AlertImprovements" title="Alert Improvements" version_string="1.4.1" version_id="1040101" url="https://xenforo.com/community/resources/alert-improvements-by-xon.4578/" install_callback_class="SV_AlertImprovements_Installer" install_callback_method="install" uninstall_callback_class="SV_AlertImprovements_Installer" uninstall_callback_method="uninstall">
   <admin_navigation/>
   <admin_permissions/>
   <admin_style_properties/>
@@ -168,8 +168,12 @@
 }
 (jQuery, this, document);
 </script>]]></template>
-    <template title="alert_post_like_summary" version_id="1040000" version_string="1.4.0"><![CDATA[{xen:phrase your_post_in_the_thread_y_has_been_liked_x,
-	'likes={$extra.likes}',
+    <template title="alert_post_like_summary" version_id="1040101" version_string="1.4.1"><![CDATA[<xen:set var="$likeTotal" value="0" />
+<xen:foreach loop="$extra.likes" key="$contentType" value="$count">
+	<xen:set var="$likeTotal" value="{xen:calc '{$likeTotal}+{$count}'}" />
+</xen:foreach>
+{xen:phrase your_post_in_the_thread_y_has_been_liked_x,
+	'likes={$likeTotal}',
 	'link=href="{xen:link account/alert, '', 'alert_id={$alert_id}'}" class="OverlayTrigger"',
 	'title=<a href="{xen:link posts, $content}" class="PopupItemLink">{xen:helper threadPrefix, $content}{$content.title}</a>'}
 ]]></template>
