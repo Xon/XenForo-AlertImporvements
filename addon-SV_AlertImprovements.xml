@@ -52,6 +52,19 @@
   <route_prefixes/>
   <style_properties/>
   <templates>
+    <template title="account_alerts_extra" version_id="1040100" version_string="1.4.1"><![CDATA[<xen:if is="{$alert.view_date} or {$markedAlertsRead}">
+    <a class="markAlertUnread" href="{xen:link 'account/unread-alert', '', 'alert_id={$alert.alert_id}'}">
+        <span class="unreadLink">
+            <xen:comment>Lack of linebreaks necessary to avoid unnecessary space</xen:comment>
+            {xen:phrase sv_mark_unread}</span></a>{xen:if {$alert.isSummary},','}
+</xen:if>
+<xen:if is="{$alert.isSummary}">
+    <a class="unsummarizeAlert" href="{xen:link 'account/unsummarize-alert', '', 'alert_id={$alert.alert_id}'}">
+        <span class="unreadLink">
+            {xen:phrase sv_unsummarize_alert}
+        </span>
+    </a>
+</xen:if>]]></template>
     <template title="account_alerts_extra_controls" version_id="1040100" version_string="1.4.1"><![CDATA[<style>
 .alertControls
 {
@@ -62,7 +75,8 @@
 <div class="alertControls">
 <a href="{xen:link account/alert-preferences, ''}">{xen:phrase alert_preferences}</a></li>, <a href="{xen:link account/alerts, '','skip_mark_read=0' }">{xen:phrase sv_mark_all_alerts_read}</a>
 </div>]]></template>
-    <template title="account_alerts_summary" version_id="1040000" version_string="1.4.0"><![CDATA[<xen:title>{xen:phrase sv_summarized_alerts}</xen:title>
+    <template title="account_alerts_summary" version_id="1040100" version_string="1.4.1"><![CDATA[<xen:include template="account_alerts_sv_script"/>
+<xen:title>{xen:phrase sv_summarized_alerts}</xen:title>
 
 <xen:edithint template="xenforo_alert.css" />
 
@@ -79,7 +93,7 @@
 					<xen:avatar user="$summaryAlert.user" size="s" img="true" class="plainImage" />
 					<div class="alertText">
 						<h3>{xen:raw $summaryAlert.template}</h3>
-						<div class="timeRow"><span class="time muted">{xen:time $summaryAlert.event_date}</span><xen:if is="{$summaryAlert.new}"><span class="newIcon"></span></xen:if></div>
+						<div class="timeRow"><span class="time muted">{xen:time $summaryAlert.event_date}</span><xen:if is="{$summaryAlert.new}"><span class="newIcon"></span></xen:if><xen:include template="account_alerts_extra"><xen:map from="$summaryAlert" to="$alert"/></xen:include></div>
 					</div>
 				</li>
 			</ol>
@@ -248,19 +262,7 @@
     <modification template="account_alerts" modification_key="sv_alertimprovements_account_alerts" description="Mark as unread link" execution_order="10" enabled="1" action="preg_replace">
       <find><![CDATA[#(<div class="timeRow.*?)(</div>)#si]]></find>
       <replace><![CDATA[$1
-<xen:if is="{$alert.view_date} or {$markedAlertsRead}">
-    <a class="markAlertUnread" href="{xen:link 'account/unread-alert', '', 'alert_id={$alert.alert_id}'}">
-        <span class="unreadLink">
-            <xen:comment>Lack of linebreaks necessary to avoid unnecessary space</xen:comment>
-            {xen:phrase sv_mark_unread}</span></a>{xen:if {$alert.isSummary},','}
-</xen:if>
-<xen:if is="{$alert.isSummary}">
-    <a class="unsummarizeAlert" href="{xen:link 'account/unsummarize-alert', '', 'alert_id={$alert.alert_id}'}">
-        <span class="unreadLink">
-            {xen:phrase sv_unsummarize_alert}
-        </span>
-    </a>
-</xen:if>
+<xen:include template="account_alerts_extra"/>
 $2]]></replace>
     </modification>
     <modification template="account_alerts" modification_key="sv_alertimprovements_account_alerts2" description="javascript to ajaxify mark alert as unread" execution_order="10" enabled="1" action="str_replace">
