@@ -44,4 +44,16 @@ class SV_AlertImprovements_XenForo_AlertHandler_DiscussionMessage_Post extends X
 
         return SV_AlertImprovements_Helper::prepareRateSummary($item, $viewingUser);
     }
+
+    protected function _prepareLike_summary(array $item, array $viewingUser)
+    {
+        if (is_callable('parent::_prepareLike_summary'))
+        {
+            $item = parent::_prepareLike_summary($item, $viewingUser);
+        }
+
+        $item["isSummary"] = true;
+
+        return SV_AlertImprovements_Helper::prepareRateSummary($item, $viewingUser);
+    }
 }
