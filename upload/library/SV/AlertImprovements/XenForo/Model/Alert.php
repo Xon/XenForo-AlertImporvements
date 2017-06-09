@@ -178,13 +178,14 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         $this->standardizeViewingUserReference($viewingUser);
 
         $summarizeThreshold = isset($visitor['sv_alerts_summarize_threshold']) ? $visitor['sv_alerts_summarize_threshold'] : 4;
+        $summarizeUnreadThreshold = $summarizeThreshold * 2 > 25 ? 25 : $summarizeThreshold * 2;
         $originalLimit = 0;
         $summerizeToken = false;
 
         // determine if summarize needs to occur
         if (($fetchMode == static::FETCH_MODE_POPUP || $fetchMode == static::FETCH_MODE_RECENT) &&
             (!isset($fetchOptions['page']) || $fetchOptions['page'] == 0) &&
-            $viewingUser['alerts_unread'] > 25 &&
+            $viewingUser['alerts_unread'] > $summarizeUnreadThreshold &&
             !SV_AlertImprovements_Globals::$skipSummarize)
         {
             $summerizeToken = $this->getSummarizeLock($userId);
