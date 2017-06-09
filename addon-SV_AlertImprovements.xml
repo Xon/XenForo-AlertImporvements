@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<addon addon_id="SV_AlertImprovements" title="Alert Improvements" version_string="1.4.1" version_id="1040101" url="https://xenforo.com/community/resources/alert-improvements-by-xon.4578/" install_callback_class="SV_AlertImprovements_Installer" install_callback_method="install" uninstall_callback_class="SV_AlertImprovements_Installer" uninstall_callback_method="uninstall">
+<addon addon_id="SV_AlertImprovements" title="Alert Improvements" version_string="1.4.2" version_id="1040200" url="https://xenforo.com/community/resources/alert-improvements-by-xon.4578/" install_callback_class="SV_AlertImprovements_Installer" install_callback_method="install" uninstall_callback_class="SV_AlertImprovements_Installer" uninstall_callback_method="uninstall">
   <admin_navigation/>
   <admin_permissions/>
   <admin_style_properties/>
@@ -177,10 +177,12 @@
 	'link=href="{xen:link account/alert, '', 'alert_id={$alert_id}'}" class="OverlayTrigger"',
 	'title=<a href="{xen:link posts, $content}" class="PopupItemLink">{xen:helper threadPrefix, $content}{$content.title}</a>'}
 ]]></template>
-    <template title="alert_post_rate_summary" version_id="1040000" version_string="1.4.0"><![CDATA[<xen:set var="$ratingString">
+    <template title="alert_post_rate_summary" version_id="1040200" version_string="1.4.2"><![CDATA[<xen:set var="$ratingString">
 <xen:foreach loop="$extra.ratings" key="$key" value="$rating">
-	<xen:set var="$ratingIcon"><xen:if is="{$rating.name}"><xen:if is="{$rating.sprite_mode}"><img src="styles/default/xenforo/clear.png" alt="{$rating.title}" title="{$rating.title}" style="background: url('styles/dark/ratings/{$rating.name}') no-repeat {$rating.sprite_params.x}px {$rating.sprite_params.y}px; width: {$rating.sprite_params.w}px; height: {$rating.sprite_params.h}px; vertical-align: middle;" /><xen:else /><img src="styles/dark/ratings/{$rating.name}" alt="{$rating.title}" title="{$rating.title}"  style="vertical-align:middle" /></xen:if></xen:if></xen:set>
-	{xen:raw $ratingIcon} x <strong>{xen:number $rating.count}</strong>
+    <xen:if is="{xen:number $rating.count} > 0">
+		<xen:set var="$ratingIcon"><xen:if is="{$rating.name}"><xen:if is="{$rating.sprite_mode}"><img src="styles/default/xenforo/clear.png" alt="{$rating.title}" title="{$rating.title}" style="background: url('styles/dark/ratings/{$rating.name}') no-repeat {$rating.sprite_params.x}px {$rating.sprite_params.y}px; width: {$rating.sprite_params.w}px; height: {$rating.sprite_params.h}px; vertical-align: middle;" /><xen:else /><img src="styles/dark/ratings/{$rating.name}" alt="{$rating.title}" title="{$rating.title}"  style="vertical-align:middle" /></xen:if></xen:if></xen:set>
+		{xen:raw $ratingIcon} x <strong>{xen:number $rating.count}</strong>
+    </xen:if>
 </xen:foreach>
 </xen:set>
 
@@ -199,10 +201,12 @@
 	'name={xen:helper username, $user, 'subject'}',
 	'link=href="{xen:link account/alert, '', 'alert_id={$alert_id}'}" class="PopupItemLink OverlayTrigger"',
 	'likedcontent={xen:raw $likeString}'}]]></template>
-    <template title="alert_user_rate_summary" version_id="1040000" version_string="1.4.0"><![CDATA[<xen:set var="$ratingString">
+    <template title="alert_user_rate_summary" version_id="1040200" version_string="1.4.2"><![CDATA[<xen:set var="$ratingString">
 <xen:foreach loop="$extra.ratings" key="$key" value="$rating">
-	<xen:set var="$ratingIcon"><xen:if is="{$rating.name}"><xen:if is="{$rating.sprite_mode}"><img src="styles/default/xenforo/clear.png" alt="{$rating.title}" title="{$rating.title}" style="background: url('styles/dark/ratings/{$rating.name}') no-repeat {$rating.sprite_params.x}px {$rating.sprite_params.y}px; width: {$rating.sprite_params.w}px; height: {$rating.sprite_params.h}px; vertical-align: middle;" /><xen:else /><img src="styles/dark/ratings/{$rating.name}" alt="{$rating.title}" title="{$rating.title}"  style="vertical-align:middle" /></xen:if></xen:if></xen:set>
-	{xen:raw $ratingIcon} x <strong>{xen:number $rating.count}</strong>
+    <xen:if is="{xen:number $rating.count} > 0">
+		<xen:set var="$ratingIcon"><xen:if is="{$rating.name}"><xen:if is="{$rating.sprite_mode}"><img src="styles/default/xenforo/clear.png" alt="{$rating.title}" title="{$rating.title}" style="background: url('styles/dark/ratings/{$rating.name}') no-repeat {$rating.sprite_params.x}px {$rating.sprite_params.y}px; width: {$rating.sprite_params.w}px; height: {$rating.sprite_params.h}px; vertical-align: middle;" /><xen:else /><img src="styles/dark/ratings/{$rating.name}" alt="{$rating.title}" title="{$rating.title}"  style="vertical-align:middle" /></xen:if></xen:if></xen:set>
+		{xen:raw $ratingIcon} x <strong>{xen:number $rating.count}</strong>
+    </xen:if>
 </xen:foreach>
 </xen:set>
 
