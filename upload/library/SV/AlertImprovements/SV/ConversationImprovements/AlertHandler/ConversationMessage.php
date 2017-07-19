@@ -2,7 +2,12 @@
 
 class SV_AlertImprovements_SV_ConversationImprovements_AlertHandler_ConversationMessage extends XFCP_SV_AlertImprovements_SV_ConversationImprovements_AlertHandler_ConversationMessage
 {
-    public function canSummarize(array $alert)
+    public function canSummarizeForUser(array $optOuts, array $viewingUser)
+    {
+        return empty($optOuts['conversation_message_like']);
+    }
+
+    public function canSummarizeItem(array $alert)
     {
         return $alert['action'] == 'like';
     }

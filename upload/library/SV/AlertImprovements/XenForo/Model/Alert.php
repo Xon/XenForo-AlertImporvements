@@ -173,6 +173,25 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         }
     }
 
+    public function getAlertHandlersForConsolidation(array $viewingUser)
+    {
+        $optOuts = $this->getAlertOptOuts($viewingUser);
+        $handlers = $this->getAlertHandlers();
+        unset($handlers['bookmark_post_alt']);
+        foreach ($handlers AS $key => $handler)
+        {
+            if (!is_callable(array($handler, 'canSummarizeForUser')) ||
+                !is_callable(array($handler, 'canSummarizeItem')) ||
+                !is_callable(array($handler, 'consolidateAlert')) ||
+                !is_callable(array($handler, 'summarizeAlerts')) ||
+                !$handler->canSummarizeForUser($optOuts, $viewingUser))
+            {
+                unset($handlers[$key]);
+            }
+        }
+        return $handlers;
+    }
+
     protected function _getAlertsFromSource($userId, $fetchMode, array $fetchOptions = array())
     {
         $this->standardizeViewingUserReference($viewingUser);
@@ -236,18 +255,13 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             $outputAlerts = array();
             $db = $this->_getDb();
             // build the list of handlers at once, and exclude based
-            $handlers = $this->getAlertHandlers();
-            foreach ($handlers AS $key => $handler)
-            {
-                if (!is_callable(array($handler, 'canSummarize')) ||
-                    !is_callable(array($handler, 'consolidateAlert')) ||
-                    !is_callable(array($handler, 'summarizeAlerts')))
-                {
-                    unset($handlers[$key]);
-                }
-            }
-
+            $handlers = $this->getAlertHandlersForConsolidation($viewingUser);
+            // nothing to be done
             $userHandler = empty($handlers['user']) ? null : $handlers['user'];
+            if (empty($handlers) || ($userHandler && count($handlers) == 1))
+            {
+                return $this->_filterAlertsToLimit($alerts, $originalLimit);
+            }
 
             // collect alerts into groupings by content/id
             $groupedContentAlerts = array();
@@ -263,7 +277,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                     continue;
                 }
                 $handler = $handlers[$item['content_type']];
-                if (!$handler->canSummarize($item))
+                if (!$handler->canSummarizeItem($item))
                 {
                     $outputAlerts[$id] = $item;
                     continue;
@@ -275,7 +289,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                 {
                     $groupedContentAlerts[$contentType][$contentId][$id] = $item;
 
-                    if ($userHandler->canSummarize($item))
+                    if ($userHandler && $userHandler->canSummarizeItem($item))
                     {
                         if (!isset($groupedUserAlerts[$item['user_id']]))
                         {
@@ -379,19 +393,23 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                 }
                 return ($a['event_date'] < $b['event_date']) ? 1 : -1;
             });
-            $alerts = $outputAlerts;
-
-            // sanity check
-            if ($originalLimit && count($alerts) > $originalLimit)
-            {
-                $alerts = array_slice($alerts, 0, $originalLimit, true);
-            }
+            $alerts = $this->_filterAlertsToLimit($outputAlerts, $originalLimit);
         }
         finally
         {
             $this->releaseSummarizeLock($summerizeToken);
         }
 
+        return $alerts;
+    }
+
+    protected function _filterAlertsToLimit($alerts, $originalLimit)
+    {
+        // sanity check
+        if ($originalLimit && count($alerts) > $originalLimit)
+        {
+            $alerts = array_slice($alerts, 0, $originalLimit, true);
+        }
         return $alerts;
     }
 

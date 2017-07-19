@@ -2,7 +2,12 @@
 
 class SV_AlertImprovements_SV_ReportImprovements_AlertHandler_ReportComment extends XFCP_SV_AlertImprovements_SV_ReportImprovements_AlertHandler_ReportComment
 {
-    public function canSummarize(array $alert)
+    public function canSummarizeForUser(array $optOuts, array $viewingUser)
+    {
+        return empty($optOuts['report_comment_like']);
+    }
+
+    public function canSummarizeItem(array $alert)
     {
         return $alert['action'] == 'like';
     }

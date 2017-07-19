@@ -2,7 +2,12 @@
 
 class SV_AlertImprovements_Dark_PostRating_AlertHandler extends XFCP_SV_AlertImprovements_Dark_PostRating_AlertHandler
 {
-    public function canSummarize(array $alert)
+    public function canSummarizeForUser(array $optOuts, array $viewingUser)
+    {
+        return empty($optOuts['post_like']);
+    }
+
+    public function canSummarizeItem(array $alert)
     {
         return $alert['action'] == 'rate';
     }

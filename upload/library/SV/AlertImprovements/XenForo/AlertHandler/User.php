@@ -2,7 +2,12 @@
 
 class SV_AlertImprovements_XenForo_AlertHandler_User extends XFCP_SV_AlertImprovements_XenForo_AlertHandler_User
 {
-    public function canSummarize(array $alert)
+    public function canSummarizeForUser(array $optOuts, array $viewingUser)
+    {
+        return true;
+    }
+
+    public function canSummarizeItem(array $alert)
     {
         switch($alert['content_type'])
         {
