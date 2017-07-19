@@ -24,13 +24,22 @@
   <cron/>
   <email_templates/>
   <email_template_modifications/>
-  <optiongroups/>
+  <optiongroups>
+    <option option_id="sv_alerts_summerize" edit_format="onoff" data_type="boolean" can_backup="1">
+      <default_value>1</default_value>
+      <edit_format_params></edit_format_params>
+      <sub_options></sub_options>
+      <relation group_id="alerts" display_order="410"/>
+    </option>
+  </optiongroups>
   <permissions>
     <permission_groups/>
     <permissions/>
     <interface_groups/>
   </permissions>
   <phrases>
+    <phrase title="option_sv_alerts_summerize" version_id="1040300" version_string="1.4.3"><![CDATA[Alert summerization]]></phrase>
+    <phrase title="option_sv_alerts_summerize_explain" version_id="1040300" version_string="1.4.3"><![CDATA[Allows grouping of alerts by content type or user to reduce clutter when a user receives a high numbers of alerts.]]></phrase>
     <phrase title="sv_alerts_page_and_summary" version_id="1040100" version_string="1.4.1"><![CDATA[Alerts page and summary settings]]></phrase>
     <phrase title="sv_alerts_page_skips_summarize_hint" version_id="1040100" version_string="1.4.1"><![CDATA[Viewing the alerts page will not summarize alerts]]></phrase>
     <phrase title="sv_alerts_page_skip_summarize" version_id="1040100" version_string="1.4.1"><![CDATA[Do not summarize alerts]]></phrase>

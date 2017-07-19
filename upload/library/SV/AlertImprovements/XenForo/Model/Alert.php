@@ -205,7 +205,8 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         if (($fetchMode == static::FETCH_MODE_POPUP || $fetchMode == static::FETCH_MODE_RECENT) &&
             (!isset($fetchOptions['page']) || $fetchOptions['page'] == 0) &&
             $viewingUser['alerts_unread'] > $summarizeUnreadThreshold &&
-            !SV_AlertImprovements_Globals::$skipSummarize)
+            !SV_AlertImprovements_Globals::$skipSummarize &&
+            XenForo_Application::getOptions()->sv_alerts_summerize)
         {
             $summerizeToken = $this->getSummarizeLock($userId);
         }
