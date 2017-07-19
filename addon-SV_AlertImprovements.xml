@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<addon addon_id="SV_AlertImprovements" title="Alert Improvements" version_string="1.4.2" version_id="1040200" url="https://xenforo.com/community/resources/alert-improvements-by-xon.4578/" install_callback_class="SV_AlertImprovements_Installer" install_callback_method="install" uninstall_callback_class="SV_AlertImprovements_Installer" uninstall_callback_method="uninstall">
+<addon addon_id="SV_AlertImprovements" title="Alert Improvements" version_string="1.4.3" version_id="1040300" url="https://xenforo.com/community/resources/alert-improvements-by-xon.4578/" install_callback_class="SV_AlertImprovements_Installer" install_callback_method="install" uninstall_callback_class="SV_AlertImprovements_Installer" uninstall_callback_method="uninstall">
   <admin_navigation/>
   <admin_permissions/>
   <admin_style_properties/>
@@ -10,6 +10,8 @@
     <listener event_id="load_class" execute_order="4578" callback_class="SV_AlertImprovements_Listener" callback_method="load_class" active="1" hint="XenForo_AlertHandler_DiscussionMessage_Post" description="XenForo_AlertHandler_DiscussionMessage_Post"/>
     <listener event_id="load_class" execute_order="4578" callback_class="SV_AlertImprovements_Listener" callback_method="load_class" active="1" hint="XenForo_AlertHandler_User" description="XenForo_AlertHandler_User"/>
     <listener event_id="load_class" execute_order="4578" callback_class="SV_AlertImprovements_Listener" callback_method="load_class" active="1" hint="Dark_PostRating_AlertHandler" description="Dark_PostRating_AlertHandler"/>
+    <listener event_id="load_class" execute_order="4578" callback_class="SV_AlertImprovements_Listener" callback_method="load_class" active="1" hint="SV_ConversationImprovements_AlertHandler_ConversationMessage" description="SV_ConversationImprovements_AlertHandler_ConversationMessage"/>
+    <listener event_id="load_class" execute_order="4578" callback_class="SV_AlertImprovements_Listener" callback_method="load_class" active="1" hint="SV_ReportImprovements_AlertHandler_ReportComment" description="SV_ReportImprovements_AlertHandler_ReportComment"/>
     <listener event_id="load_class" execute_order="4578" callback_class="SV_AlertImprovements_Listener" callback_method="load_class" active="1" hint="XenForo_ControllerPublic_Account" description="XenForo_ControllerPublic_Account"/>
     <listener event_id="load_class" execute_order="4578" callback_class="SV_AlertImprovements_Listener" callback_method="load_class" active="1" hint="XenForo_ControllerPublic_Thread" description="XenForo_ControllerPublic_Thread"/>
     <listener event_id="load_class" execute_order="4578" callback_class="SV_AlertImprovements_Listener" callback_method="load_class" active="1" hint="XenForo_ControllerPublic_Conversation" description="XenForo_ControllerPublic_Conversation"/>
@@ -46,6 +48,8 @@
     <phrase title="x_of_conversation_messages" version_id="1040000" version_string="1.4.0"><![CDATA[{count} of your conversation messages.]]></phrase>
     <phrase title="x_of_posts" version_id="1040000" version_string="1.4.0"><![CDATA[{count} of your posts.]]></phrase>
     <phrase title="x_of_report_comments" version_id="1040000" version_string="1.4.0"><![CDATA[{count} of your report comments.]]></phrase>
+    <phrase title="your_comment_in_the_report_y_has_been_liked_x" version_id="1040000" version_string="1.4.0"><![CDATA[Your comment on the report {title} <a {link}>has been liked</a> {likes} times]]></phrase>
+    <phrase title="your_message_in_the_conversation_y_has_been_liked_x" version_id="1040000" version_string="1.4.0"><![CDATA[Your message in the conversation {title} <a {link}>has been liked</a> {likes} times]]></phrase>
     <phrase title="your_post_in_the_thread_y_has_been_liked_x" version_id="1040000" version_string="1.4.0"><![CDATA[Your post in the thread {title} <a {link}>has been liked</a> {likes} times]]></phrase>
     <phrase title="your_post_in_the_thread_y_has_been_rated_x" version_id="1040000" version_string="1.4.0"><![CDATA[Your post in the thread {title} <a {link}>has been rated</a> {ratings}]]></phrase>
   </phrases>
@@ -168,6 +172,15 @@
 }
 (jQuery, this, document);
 </script>]]></template>
+    <template title="alert_conversation_message_like_summary" version_id="1040101" version_string="1.4.1"><![CDATA[<xen:set var="$likeTotal" value="0" />
+<xen:foreach loop="$extra.likes" key="$contentType" value="$count">
+	<xen:set var="$likeTotal" value="{xen:calc '{$likeTotal}+{$count}'}" />
+</xen:foreach>
+{xen:phrase your_message_in_the_conversation_y_has_been_liked_x,
+	'likes={$likeTotal}',
+	'link=href="{xen:link account/alert, '', 'alert_id={$alert_id}'}" class="OverlayTrigger"',
+	'title=<a href="{xen:link conversations/message, $content, 'message_id={$content.message_id}'}" class="PopupItemLink">{xen:helper threadPrefix, $content}{$content.title}</a>'}
+]]></template>
     <template title="alert_post_like_summary" version_id="1040101" version_string="1.4.1"><![CDATA[<xen:set var="$likeTotal" value="0" />
 <xen:foreach loop="$extra.likes" key="$contentType" value="$count">
 	<xen:set var="$likeTotal" value="{xen:calc '{$likeTotal}+{$count}'}" />
@@ -190,6 +203,15 @@
 	'ratings={xen:raw $ratingString}',
 	'link=href="{xen:link account/alert, '', 'alert_id={$alert_id}'}" class="OverlayTrigger"',
 	'title=<a href="{xen:link posts, $content}" class="PopupItemLink">{xen:helper threadPrefix, $content}{$content.title}</a>'}
+]]></template>
+    <template title="alert_report_comment_like_summary" version_id="1040101" version_string="1.4.1"><![CDATA[<xen:set var="$likeTotal" value="0" />
+<xen:foreach loop="$extra.likes" key="$contentType" value="$count">
+	<xen:set var="$likeTotal" value="{xen:calc '{$likeTotal}+{$count}'}" />
+</xen:foreach>
+{xen:phrase your_comment_in_the_report_y_has_been_liked_x,
+	'likes={$likeTotal}',
+	'link=href="{xen:link account/alert, '', 'alert_id={$alert_id}'}" class="OverlayTrigger"',
+	'title=<a href="{xen:link reports/comment, $content.report, 'report_comment_id={$content.report_comment_id}'}" class="PopupItemLink">{xen:helper threadPrefix, $content}{$content.title}</a>'}
 ]]></template>
     <template title="alert_user_like_summary" version_id="1040100" version_string="1.4.1"><![CDATA[<xen:set var="$likeString">
 <xen:foreach loop="$extra.likes" key="$contentType" value="$count">
