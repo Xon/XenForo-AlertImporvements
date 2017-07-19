@@ -128,8 +128,8 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         $stmt = $db->query('
             UPDATE xf_user_alert
             SET summerize_id = null, view_date = 0
-            WHERE summerize_id = ?
-        ', array($summaryId));
+            WHERE alerted_user_id = ? and summerize_id = ?
+        ', array($userId, $summaryId));
 
         // Reset unread alerts counter
         $increment = $stmt->rowCount();
