@@ -4,7 +4,32 @@
   <admin_permissions/>
   <admin_style_properties/>
   <admin_templates/>
-  <admin_template_modifications/>
+  <admin_template_modifications>
+    <modification template="option_template_registrationDefaults" modification_key="sv_alerts_option_template_registrationDefaults" description="" execution_order="10" enabled="1" action="str_replace">
+      <find><![CDATA[<ul class="unitPairsJustified">]]></find>
+      <replace><![CDATA[$0
+<xen:checkbox>
+<xen:option name="{$fieldPrefix}[{$preparedOption.option_id}][sv_alerts_page_skips_mark_read]" selected="{$value.sv_alerts_page_skips_mark_read}">{xen:phrase sv_alerts_page_skip_mark_read_admin}</xen:option>
+<xen:option name="{$fieldPrefix}[{$preparedOption.option_id}][sv_alerts_page_skips_summarize]" selected="{$value.sv_alerts_page_skips_summarize}">{xen:phrase sv_alerts_page_skip_summarize_admin}</xen:option>
+</xen:checkbox>
+<li>
+<span class="label">{xen:phrase sv_alerts_summarize_threshold_admin}:</span>
+<span class="value">
+<xen:spinbox name="{$fieldPrefix}[{$preparedOption.option_id}][sv_alerts_summarize_threshold]" value="{$value.sv_alerts_summarize_threshold}" readonly="!{$xenOptions.sv_alerts_summerize}" min="0" />
+</span>
+</li>
+<xen:comment>prevent other replacements</xen:comment>
+<br />]]></replace>
+    </modification>
+    <modification template="user_edit" modification_key="sv_alerts_user_edit" description="" execution_order="4578" enabled="1" action="preg_replace">
+      <find><![CDATA[#(<xen:option name="email_on_conversation".*?</xen:option>)(.*?</xen:checkboxunit>)#si]]></find>
+      <replace><![CDATA[$1
+<xen:option name="sv_alerts_page_skips_mark_read" selected="{$user.sv_alerts_page_skips_mark_read}" readonly="!{$xenOptions.sv_alerts_summerize}">{xen:phrase sv_alerts_page_skip_mark_read_admin}</xen:option>
+<xen:option name="sv_alerts_page_skips_summarize" selected="{$user.sv_alerts_page_skips_summarize}" readonly="!{$xenOptions.sv_alerts_summerize}">{xen:phrase sv_alerts_page_skip_summarize_admin}</xen:option>
+$2
+<xen:spinboxunit label="{xen:phrase sv_alerts_summarize_threshold_admin}" explain="{xen:phrase sv_alerts_summarize_threshold_hint}:" name="sv_alerts_summarize_threshold" value="{$user.sv_alerts_summarize_threshold}" readonly="!{$xenOptions.sv_alerts_summerize}" min="0" />]]></replace>
+    </modification>
+  </admin_template_modifications>
   <code_events/>
   <code_event_listeners>
     <listener event_id="load_class" execute_order="4578" callback_class="SV_AlertImprovements_Listener" callback_method="load_class" active="1" hint="XenForo_AlertHandler_DiscussionMessage_Post" description="XenForo_AlertHandler_DiscussionMessage_Post"/>
@@ -42,7 +67,10 @@
     <phrase title="option_sv_alerts_summerize_explain" version_id="1040300" version_string="1.4.3"><![CDATA[Allows grouping of alerts by content type or user to reduce clutter when a user receives a high numbers of alerts.]]></phrase>
     <phrase title="sv_alerts_page_and_summary" version_id="1040100" version_string="1.4.1"><![CDATA[Alerts page and summary settings]]></phrase>
     <phrase title="sv_alerts_page_skips_summarize_hint" version_id="1040100" version_string="1.4.1"><![CDATA[Viewing the alerts page will not summarize alerts]]></phrase>
+    <phrase title="sv_alerts_page_skip_mark_read_admin" version_id="1040300" version_string="1.4.3"><![CDATA[On Alerts page, does not mark alerts as read]]></phrase>
     <phrase title="sv_alerts_page_skip_summarize" version_id="1040100" version_string="1.4.1"><![CDATA[Do not summarize alerts]]></phrase>
+    <phrase title="sv_alerts_page_skip_summarize_admin" version_id="1040300" version_string="1.4.3"><![CDATA[On Alerts page, does not summarize alerts]]></phrase>
+    <phrase title="sv_alerts_summarize_threshold_admin" version_id="1040300" version_string="1.4.3"><![CDATA[Alerts summarize threshold]]></phrase>
     <phrase title="sv_alerts_summarize_threshold_hint" version_id="1040100" version_string="1.4.1"><![CDATA[Summarize similar alerts with numbers greater than]]></phrase>
     <phrase title="sv_alert_page_skip_mark_read" version_id="1040100" version_string="1.4.1"><![CDATA[Do not mark alerts as read]]></phrase>
     <phrase title="sv_alert_page_skip_mark_read_hint" version_id="1040100" version_string="1.4.1"><![CDATA[Viewing the alerts page will not mark alerts as read]]></phrase>
