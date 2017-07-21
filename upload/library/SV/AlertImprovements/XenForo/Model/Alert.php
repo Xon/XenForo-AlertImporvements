@@ -198,7 +198,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
 
         $summarizeThreshold = isset($visitor['sv_alerts_summarize_threshold']) ? $visitor['sv_alerts_summarize_threshold'] : 4;
         $summarizeUnreadThreshold = $summarizeThreshold * 2 > 25 ? 25 : $summarizeThreshold * 2;
-        $originalLimit = 0;
+        $originalLimit = isset($fetchOptions['perPage']) ? $fetchOptions['perPage'] : 0;
         $summerizeToken = false;
 
         // determine if summarize needs to occur
@@ -216,7 +216,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             {
                 $fetchMode = static::FETCH_MODE_RECENT;
                 $fetchOptions['page'] = 0;
-                $originalLimit = isset($fetchOptions['perPage']) ? $fetchOptions['perPage'] : 25;
+                $originalLimit = isset($fetchOptions['perPage']) ? $fetchOptions['perPage'] : 0;
                 unset($fetchOptions['perPage']);
             }
 
@@ -226,7 +226,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             if ($fetchMode == self::FETCH_MODE_POPUP)
             {
                 $fetchOptions['page'] = 0;
-                $fetchOptions['perPage'] = 25;
+                $fetchOptions['perPage'] = $originalLimit = 25;
             }
 
             $limitOptions = $this->prepareLimitFetchOptions($fetchOptions);
