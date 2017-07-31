@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<addon addon_id="SV_AlertImprovements" title="Alert Improvements" version_string="1.4.4" version_id="1040400" url="https://xenforo.com/community/resources/alert-improvements-by-xon.4578/" install_callback_class="SV_AlertImprovements_Installer" install_callback_method="install" uninstall_callback_class="SV_AlertImprovements_Installer" uninstall_callback_method="uninstall">
+<addon addon_id="SV_AlertImprovements" title="Alert Improvements" version_string="1.4.5" version_id="1040500" url="https://xenforo.com/community/resources/alert-improvements-by-xon.4578/" install_callback_class="SV_AlertImprovements_Installer" install_callback_method="install" uninstall_callback_class="SV_AlertImprovements_Installer" uninstall_callback_method="uninstall">
   <admin_navigation/>
   <admin_permissions/>
   <admin_style_properties/>
@@ -9,11 +9,11 @@
       <find><![CDATA[<ul class="unitPairsJustified">]]></find>
       <replace><![CDATA[$0
 <xen:checkbox>
-<xen:option name="{$fieldPrefix}[{$preparedOption.option_id}][sv_alerts_page_skips_mark_read]" selected="{$value.sv_alerts_page_skips_mark_read}">{xen:phrase sv_alerts_page_skip_mark_read_admin}</xen:option>
-<xen:option name="{$fieldPrefix}[{$preparedOption.option_id}][sv_alerts_page_skips_summarize]" selected="{$value.sv_alerts_page_skips_summarize}">{xen:phrase sv_alerts_page_skip_summarize_admin}</xen:option>
+<xen:option name="{$fieldPrefix}[{$preparedOption.option_id}][sv_alerts_page_skips_mark_read]" selected="{$value.sv_alerts_page_skips_mark_read}">{xen:phrase sv_alerts_page_skips_mark_read}</xen:option>
+<xen:option name="{$fieldPrefix}[{$preparedOption.option_id}][sv_alerts_page_skips_summarize]" selected="{$value.sv_alerts_page_skips_summarize}">{xen:phrase sv_alerts_page_skips_summarize}</xen:option>
 </xen:checkbox>
 <li>
-<span class="label">{xen:phrase sv_alerts_summarize_threshold_admin}:</span>
+<span class="label">{xen:phrase sv_alerts_summarize_threshold}:</span>
 <span class="value">
 <xen:spinbox name="{$fieldPrefix}[{$preparedOption.option_id}][sv_alerts_summarize_threshold]" value="{$value.sv_alerts_summarize_threshold}" readonly="!{$xenOptions.sv_alerts_summerize}" min="0" />
 </span>
@@ -24,10 +24,10 @@
     <modification template="user_edit" modification_key="sv_alerts_user_edit" description="" execution_order="4578" enabled="1" action="preg_replace">
       <find><![CDATA[#(<xen:option name="email_on_conversation".*?</xen:option>)(.*?</xen:checkboxunit>)#si]]></find>
       <replace><![CDATA[$1
-<xen:option name="sv_alerts_page_skips_mark_read" selected="{$user.sv_alerts_page_skips_mark_read}" readonly="!{$xenOptions.sv_alerts_summerize}">{xen:phrase sv_alerts_page_skip_mark_read_admin}</xen:option>
-<xen:option name="sv_alerts_page_skips_summarize" selected="{$user.sv_alerts_page_skips_summarize}" readonly="!{$xenOptions.sv_alerts_summerize}">{xen:phrase sv_alerts_page_skip_summarize_admin}</xen:option>
+<xen:option name="sv_alerts_page_skips_mark_read" selected="{$user.sv_alerts_page_skips_mark_read}" readonly="!{$xenOptions.sv_alerts_summerize}">{xen:phrase sv_alerts_page_skips_mark_read}</xen:option>
+<xen:option name="sv_alerts_page_skips_summarize" selected="{$user.sv_alerts_page_skips_summarize}" readonly="!{$xenOptions.sv_alerts_summerize}">{xen:phrase sv_alerts_page_skips_summarize}</xen:option>
 $2
-<xen:spinboxunit label="{xen:phrase sv_alerts_summarize_threshold_admin}" explain="{xen:phrase sv_alerts_summarize_threshold_hint}:" name="sv_alerts_summarize_threshold" value="{$user.sv_alerts_summarize_threshold}" readonly="!{$xenOptions.sv_alerts_summerize}" min="0" />]]></replace>
+<xen:spinboxunit label="{xen:phrase sv_alerts_summarize_threshold}" explain="{xen:phrase sv_alerts_summarize_threshold_hint}:" name="sv_alerts_summarize_threshold" value="{$user.sv_alerts_summarize_threshold}" readonly="!{$xenOptions.sv_alerts_summerize}" min="0" />]]></replace>
     </modification>
   </admin_template_modifications>
   <code_events/>
@@ -67,13 +67,11 @@ $2
     <phrase title="option_sv_alerts_summerize_explain" version_id="1040300" version_string="1.4.3"><![CDATA[Allows grouping of alerts by content type or user to reduce clutter when a user receives a high numbers of alerts.]]></phrase>
     <phrase title="sv_alerts_page_and_summary" version_id="1040100" version_string="1.4.1"><![CDATA[Alerts page and summary settings]]></phrase>
     <phrase title="sv_alerts_page_skips_summarize_hint" version_id="1040100" version_string="1.4.1"><![CDATA[Viewing the alerts page will not summarize alerts]]></phrase>
-    <phrase title="sv_alerts_page_skip_mark_read_admin" version_id="1040300" version_string="1.4.3"><![CDATA[On Alerts page, does not mark alerts as read]]></phrase>
-    <phrase title="sv_alerts_page_skip_summarize" version_id="1040100" version_string="1.4.1"><![CDATA[Do not summarize alerts]]></phrase>
-    <phrase title="sv_alerts_page_skip_summarize_admin" version_id="1040300" version_string="1.4.3"><![CDATA[On Alerts page, does not summarize alerts]]></phrase>
-    <phrase title="sv_alerts_summarize_threshold_admin" version_id="1040300" version_string="1.4.3"><![CDATA[Alerts summarize threshold]]></phrase>
+    <phrase title="sv_alerts_page_skips_summarize" version_id="1040500" version_string="1.4.5"><![CDATA[Alerts page skips summarizing]]></phrase>
+    <phrase title="sv_alerts_summarize_threshold" version_id="1040500" version_string="1.4.5"><![CDATA[Alerts summarize threshold]]></phrase>
     <phrase title="sv_alerts_summarize_threshold_hint" version_id="1040100" version_string="1.4.1"><![CDATA[Summarize similar alerts with numbers greater than]]></phrase>
-    <phrase title="sv_alert_page_skip_mark_read" version_id="1040100" version_string="1.4.1"><![CDATA[Do not mark alerts as read]]></phrase>
-    <phrase title="sv_alert_page_skip_mark_read_hint" version_id="1040100" version_string="1.4.1"><![CDATA[Viewing the alerts page will not mark alerts as read]]></phrase>
+    <phrase title="sv_alerts_page_skips_mark_read" version_id="1040500" version_string="1.4.5"><![CDATA[Alerts page skips mark read]]></phrase>
+    <phrase title="sv_alerts_page_skips_mark_read_hint" version_id="1040100" version_string="1.4.1"><![CDATA[Viewing the alerts page will not mark alerts as read]]></phrase>
     <phrase title="sv_mark_all_alerts_read" version_id="1030000" version_string="1.3.0"><![CDATA[Mark all as read]]></phrase>
     <phrase title="sv_mark_unread" version_id="1000000" version_string="1.0.0"><![CDATA[Mark unread]]></phrase>
     <phrase title="sv_on_viewing_alerts_page" version_id="1040100" version_string="1.4.1"><![CDATA[On viewing alerts page]]></phrase>
@@ -291,7 +289,7 @@ $2
 	'link=href="{xen:link account/alert, '', 'alert_id={$alert_id}'}" class="PopupItemLink OverlayTrigger"',
 	'ratings={xen:raw $ratingString}'}
 </xen:if>]]></template>
-    <template title="SV_AlertImprovements_Alert_Preferences" version_id="1040100" version_string="1.4.1"><![CDATA[<h3 class="sectionHeader">{xen:phrase sv_alerts_page_and_summary}</h3>
+    <template title="SV_AlertImprovements_Alert_Preferences" version_id="1040500" version_string="1.4.5"><![CDATA[<h3 class="sectionHeader">{xen:phrase sv_alerts_page_and_summary}</h3>
 <dl class="ctrlUnit">
     <dt>{xen:phrase sv_on_viewing_alerts_page}...</dt>
     <dd>
@@ -299,15 +297,15 @@ $2
             <li>
                 <label for="ctrl_sv_alerts_page_skips_mark_read">
                     <input type="checkbox" name="sv_alerts_page_skips_mark_read" value="1" {xen:checked "{$visitor.sv_alerts_page_skips_mark_read}"} />
-                    {xen:phrase sv_alert_page_skip_mark_read}
+                    {xen:phrase sv_alerts_page_skips_mark_read}
                 </label>
-                <p class="hint">{xen:phrase sv_alert_page_skip_mark_read_hint}</p>
+                <p class="hint">{xen:phrase sv_alerts_page_skips_mark_read_hint}</p>
             </li>
 
             <li>
                 <label for="ctrl_sv_alerts_page_skips_summarize">
                     <input type="checkbox" name="sv_alerts_page_skips_summarize" value="1" {xen:checked "{$visitor.sv_alerts_page_skips_summarize}"} />
-                    {xen:phrase sv_alerts_page_skip_summarize}
+                    {xen:phrase sv_alerts_page_skips_summarize}
                 </label>
                 <p class="hint">{xen:phrase sv_alerts_page_skips_summarize_hint}</p>
             </li>
