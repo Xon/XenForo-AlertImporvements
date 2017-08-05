@@ -123,6 +123,17 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
 
     public function insertUnsummarizedAlerts($userId, $summaryId)
     {
+        XenForo_Db::beginTransaction($db);
+
+        // Delete summary alert
+        $summaryAlert = $this->getAlertById($summaryId);
+        $dw = XenForo_DataWriter::create('XenForo_DataWriter_Alert');
+        if (!$dw->setExistingData($summaryAlert, true))
+        {
+            return;
+        }
+        $dw->delete();
+
         // Make alerts visible
         $db = $this->_getDb();
         $stmt = $db->query('
@@ -146,11 +157,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             $visitor['alerts_unread'] += $increment;
         }
 
-        // Delete summary alert
-        $summaryAlert = $this->getAlertById($summaryId);
-        $dw = XenForo_DataWriter::create('XenForo_DataWriter_Alert');
-        $dw->setExistingData($summaryAlert, true);
-        $dw->delete();
+        XenForo_Db::commit($db);
     }
 
     protected function getSummarizeLock($userId)
