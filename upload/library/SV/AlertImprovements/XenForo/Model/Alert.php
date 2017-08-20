@@ -63,7 +63,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         return $handlers;
     }
 
-    protected function insertSummaryAlert($handler, $summarizeThreshold, $contentType, $contentId, array $alertGrouping, &$grouped, array &$outputAlerts, $groupingStyle, $senderUserId)
+    protected function insertSummaryAlert($handler, $summarizeThreshold, $contentType, $contentId, array $alertGrouping, &$grouped, array &$outputAlerts, $groupingStyle, $senderUserId, $summaryAlertViewDate)
     {
         $grouped = 0;
         if (!$summarizeThreshold || count($alertGrouping) < $summarizeThreshold)
@@ -81,7 +81,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             'content_id' => $contentId,
             'action' => $lastAlert['action'].'_summary',
             'event_date' => $lastAlert['event_date'],
-            'view_date'  => 0,
+            'view_date'  => $summaryAlertViewDate,
             'extra_data' => array(),
         );
         $summaryAlert = $handler->summarizeAlerts($summaryAlert, $alertGrouping, $groupingStyle);
@@ -224,7 +224,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             where user_id = ?
         ", $userId);
 
-        $fetchOptions = array('forceSummarize' => true, 'ignoreReadState' => true);
+        $fetchOptions = array('forceSummarize' => true, 'ignoreReadState' => true, 'summaryAlertTime' => XenForo_Application::$time);
         $this->_getAlertsFromSource($userId, static::FETCH_MODE_ALL, $fetchOptions);
 
         XenForo_Db::commit($db);
@@ -239,6 +239,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         $originalLimit = isset($fetchOptions['perPage']) ? $fetchOptions['perPage'] : 0;
         $summerizeToken = false;
 
+        $summaryAlertViewDate = isset($fetchOptions['ignoreReadState']) ? intval($fetchOptions['summaryAlertTime']) : 0;
         $ignoreReadState = !empty($fetchOptions['ignoreReadState']);
         if (!empty($fetchOptions['forceSummarize']))
         {
@@ -357,7 +358,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                 $handler = $handlers[$contentType];
                 foreach ($contentIds AS $contentId => $alertGrouping)
                 {
-                    if ($this->insertSummaryAlert($handler, $summarizeThreshold, $contentType, $contentId, $alertGrouping, $grouped, $outputAlerts, 'content', 0))
+                    if ($this->insertSummaryAlert($handler, $summarizeThreshold, $contentType, $contentId, $alertGrouping, $grouped, $outputAlerts, 'content', 0, $summaryAlertViewDate))
                     {
                         unset($contentIds[$contentId]);
                         $groupedAlerts = true;
@@ -391,7 +392,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                             }
                         }
                     }
-                    if ($userAlertGrouping && $this->insertSummaryAlert($userHandler, $summarizeThreshold, 'user', $userId, $userAlertGrouping, $grouped, $outputAlerts, 'user', $senderUserId))
+                    if ($userAlertGrouping && $this->insertSummaryAlert($userHandler, $summarizeThreshold, 'user', $userId, $userAlertGrouping, $grouped, $outputAlerts, 'user', $senderUserId, $summaryAlertViewDate))
                     {
                         foreach ($userAlertGrouping AS $id => $alert)
                         {
