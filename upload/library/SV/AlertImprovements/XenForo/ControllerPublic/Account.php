@@ -4,10 +4,16 @@ class SV_AlertImprovements_XenForo_ControllerPublic_Account extends XFCP_SV_Aler
 {
     public function actionSummarizeAlerts()
     {
-        if (XenForo_Application::getOptions()->sv_alerts_summerize)
+        $options = XenForo_Application::getOptions();
+        if ($options->sv_alerts_summerize)
         {
+            $this->assertNotFlooding('alertSummarize', max(1, intval($options->sv_alerts_summerize_flood)));
             $alertModel = $this->_getAlertModel();
             $alertModel->summarizeAlertsForUser(XenForo_Visitor::getUserId());
+        }
+        else
+        {
+            return $this->getNotFoundResponse();
         }
         return $this->responseRedirect(
             XenForo_ControllerResponse_Redirect::SUCCESS,
