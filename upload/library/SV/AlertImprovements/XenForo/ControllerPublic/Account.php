@@ -2,6 +2,19 @@
 
 class SV_AlertImprovements_XenForo_ControllerPublic_Account extends XFCP_SV_AlertImprovements_XenForo_ControllerPublic_Account
 {
+    public function actionSummarizeAlerts()
+    {
+        if (XenForo_Application::getOptions()->sv_alerts_summerize)
+        {
+            $alertModel = $this->_getAlertModel();
+            $alertModel->summarizeAlertsForUser(XenForo_Visitor::getUserId());
+        }
+        return $this->responseRedirect(
+            XenForo_ControllerResponse_Redirect::SUCCESS,
+            XenForo_Link::buildPublicLink('account/alerts', array(), array())
+        );
+    }
+
     public function actionAlerts()
     {
         $visitor = XenForo_Visitor::getInstance()->toArray();

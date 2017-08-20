@@ -201,6 +201,35 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         return $handlers;
     }
 
+    public function summarizeAlertsForUser($userId)
+    {
+        $db = $this->_getDb();
+        // psot rating summary alerts really can't me merged, so wipe all summary alerts, and then try again
+        XenForo_Db::beginTransaction($db);
+
+        $db->query("
+            delete from xf_user_alert
+            where alerted_user_id = ? and summerize_id is null and `action` like '%_summary'
+        ", $userId);
+
+        $db->query("
+            update xf_user_alert
+            set view_date = 0, summerize_id = null
+            where alerted_user_id = ? and summerize_id is not null
+        ", $userId);
+
+        $db->query("
+            update xf_user
+            set alerts_unread = (select count(*) from xf_user_alert where alerted_user_id = xf_user.user_id and view_date = 0)
+            where user_id = ?
+        ", $userId);
+
+        $fetchOptions = array('forceSummarize' => true, 'ignoreReadState' => true);
+        $this->_getAlertsFromSource($userId, static::FETCH_MODE_ALL, $fetchOptions);
+
+        XenForo_Db::commit($db);
+    }
+
     protected function _getAlertsFromSource($userId, $fetchMode, array $fetchOptions = array())
     {
         $this->standardizeViewingUserReference($viewingUser);
@@ -210,8 +239,14 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         $originalLimit = isset($fetchOptions['perPage']) ? $fetchOptions['perPage'] : 0;
         $summerizeToken = false;
 
+        $ignoreReadState = !empty($fetchOptions['ignoreReadState']);
+        if (!empty($fetchOptions['forceSummarize']))
+        {
+            $summarizeUnreadThreshold = -1;
+        }
+
         // determine if summarize needs to occur
-        if (($fetchMode == static::FETCH_MODE_POPUP || $fetchMode == static::FETCH_MODE_RECENT) &&
+        if (
             (!isset($fetchOptions['page']) || $fetchOptions['page'] == 0) &&
             $viewingUser['alerts_unread'] > $summarizeUnreadThreshold &&
             !SV_AlertImprovements_Globals::$skipSummarize &&
@@ -279,7 +314,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             $groupedAlerts = false;
             foreach ($alerts AS $id => $item)
             {
-                if ($item['view_date'] ||
+                if ((!$ignoreReadState && $item['view_date']) ||
                     empty($handlers[$item['content_type']]) ||
                     $this->endswith($item['action'], '_summary'))
                 {

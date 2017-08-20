@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<addon addon_id="SV_AlertImprovements" title="Alert Improvements" version_string="1.4.5" version_id="1040500" url="https://xenforo.com/community/resources/alert-improvements-by-xon.4578/" install_callback_class="SV_AlertImprovements_Installer" install_callback_method="install" uninstall_callback_class="SV_AlertImprovements_Installer" uninstall_callback_method="uninstall">
+<addon addon_id="SV_AlertImprovements" title="Alert Improvements" version_string="1.4.6" version_id="1040600" url="https://xenforo.com/community/resources/alert-improvements-by-xon.4578/" install_callback_class="SV_AlertImprovements_Installer" install_callback_method="install" uninstall_callback_class="SV_AlertImprovements_Installer" uninstall_callback_method="uninstall">
   <admin_navigation/>
   <admin_permissions/>
   <admin_style_properties/>
@@ -66,15 +66,16 @@ $2
     <phrase title="option_sv_alerts_summerize" version_id="1040300" version_string="1.4.3"><![CDATA[Alert summerization]]></phrase>
     <phrase title="option_sv_alerts_summerize_explain" version_id="1040300" version_string="1.4.3"><![CDATA[Allows grouping of alerts by content type or user to reduce clutter when a user receives a high numbers of alerts.]]></phrase>
     <phrase title="sv_alerts_page_and_summary" version_id="1040100" version_string="1.4.1"><![CDATA[Alerts page and summary settings]]></phrase>
-    <phrase title="sv_alerts_page_skips_summarize_hint" version_id="1040100" version_string="1.4.1"><![CDATA[Viewing the alerts page will not summarize alerts]]></phrase>
-    <phrase title="sv_alerts_page_skips_summarize" version_id="1040500" version_string="1.4.5"><![CDATA[Alerts page skips summarizing]]></phrase>
-    <phrase title="sv_alerts_summarize_threshold" version_id="1040500" version_string="1.4.5"><![CDATA[Alerts summarize threshold]]></phrase>
-    <phrase title="sv_alerts_summarize_threshold_hint" version_id="1040100" version_string="1.4.1"><![CDATA[Summarize similar alerts with numbers greater than]]></phrase>
     <phrase title="sv_alerts_page_skips_mark_read" version_id="1040500" version_string="1.4.5"><![CDATA[Alerts page skips mark read]]></phrase>
     <phrase title="sv_alerts_page_skips_mark_read_hint" version_id="1040100" version_string="1.4.1"><![CDATA[Viewing the alerts page will not mark alerts as read]]></phrase>
+    <phrase title="sv_alerts_page_skips_summarize" version_id="1040500" version_string="1.4.5"><![CDATA[Alerts page skips summarizing]]></phrase>
+    <phrase title="sv_alerts_page_skips_summarize_hint" version_id="1040100" version_string="1.4.1"><![CDATA[Viewing the alerts page will not summarize alerts]]></phrase>
+    <phrase title="sv_alerts_summarize_threshold" version_id="1040500" version_string="1.4.5"><![CDATA[Alerts summarize threshold]]></phrase>
+    <phrase title="sv_alerts_summarize_threshold_hint" version_id="1040100" version_string="1.4.1"><![CDATA[Summarize similar alerts with numbers greater than]]></phrase>
     <phrase title="sv_mark_all_alerts_read" version_id="1030000" version_string="1.3.0"><![CDATA[Mark all as read]]></phrase>
     <phrase title="sv_mark_unread" version_id="1000000" version_string="1.0.0"><![CDATA[Mark unread]]></phrase>
     <phrase title="sv_on_viewing_alerts_page" version_id="1040100" version_string="1.4.1"><![CDATA[On viewing alerts page]]></phrase>
+    <phrase title="sv_resummarize_alerts" version_id="1040600" version_string="1.4.6"><![CDATA[Resummarize alerts]]></phrase>
     <phrase title="sv_summarized_alerts" version_id="1040000" version_string="1.4.0"><![CDATA[Summarized Alerts]]></phrase>
     <phrase title="sv_unsummarize_alert" version_id="1040100" version_string="1.4.1"><![CDATA[Unsummarize alerts]]></phrase>
     <phrase title="sv_x_liked_y_content_z_times" version_id="1040000" version_string="1.4.0"><![CDATA[{name} <a {link}>liked {likedcontent}</a>]]></phrase>
@@ -104,7 +105,7 @@ $2
         </span>
     </a>
 </xen:if>]]></template>
-    <template title="account_alerts_extra_controls" version_id="1040100" version_string="1.4.1"><![CDATA[<style>
+    <template title="account_alerts_extra_controls" version_id="1040600" version_string="1.4.6"><![CDATA[<style>
 .alertControls
 {
   float:right;
@@ -112,7 +113,9 @@ $2
 }
 </style>
 <div class="alertControls">
-<a href="{xen:link account/alert-preferences, ''}">{xen:phrase alert_preferences}</a></li>, <a href="{xen:link account/alerts, '','skip_mark_read=0' }">{xen:phrase sv_mark_all_alerts_read}</a>
+<a href="{xen:link account/alert-preferences, ''}">{xen:phrase alert_preferences}</a></li>, 
+<xen:if is="{$xenOptions.sv_alerts_summerize}"><a href="{xen:link account/summarize-alerts }">{xen:phrase sv_resummarize_alerts}</a>, </xen:if>
+<a href="{xen:link account/alerts, '','skip_mark_read=0' }">{xen:phrase sv_mark_all_alerts_read}</a>
 </div>]]></template>
     <template title="account_alerts_summary" version_id="1040100" version_string="1.4.1"><![CDATA[<xen:include template="account_alerts_sv_script"/>
 <xen:title>{xen:phrase sv_summarized_alerts}</xen:title>
