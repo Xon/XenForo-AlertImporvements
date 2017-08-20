@@ -123,13 +123,15 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
 
     public function insertUnsummarizedAlerts($userId, $summaryId)
     {
+        $db = $this->_getDb();
         XenForo_Db::beginTransaction($db);
 
         // Delete summary alert
         $summaryAlert = $this->getAlertById($summaryId);
-        $dw = XenForo_DataWriter::create('XenForo_DataWriter_Alert');
+        $dw = XenForo_DataWriter::create('XenForo_DataWriter_Alert', XenForo_DataWriter::ERROR_SILENT);
         if (!$dw->setExistingData($summaryAlert, true))
         {
+            @XenForo_Db::rollback($db);
             return;
         }
         $dw->delete();
