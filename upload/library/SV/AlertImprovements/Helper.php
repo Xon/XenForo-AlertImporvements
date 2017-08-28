@@ -50,12 +50,16 @@ abstract class SV_AlertImprovements_Helper
                     $keyedRatings[$rating['rating']] = $rating['count'];
                 }
                 $likeRatingId = XenForo_Application::GetOptions()->dark_postrating_like_id;
-                if ($likeRatingId)
+                if ($likeRatingId && !empty($likesByContentType['post']))
                 {
-                    $keyedRatings[$likeRatingId] = isset($likesByContentType['post']) ? $likesByContentType['post'] : 0;
+                    $keyedRatings[$likeRatingId] = $likesByContentType['post'];
                 }
                 $summaryAlert['extra_data']['ratings'] = $keyedRatings;
                 $summaryAlert['action'] = 'rate_summary';
+            }
+            if (empty($likesByContentType['post']))
+            {
+                unset($likesByContentType['post']);
             }
             $summaryAlert['extra_data']['likes'] = $likesByContentType;
         }
@@ -88,8 +92,11 @@ abstract class SV_AlertImprovements_Helper
                     if (isset($item['extra']['ratings'][$id]))
                     {
                         $rating['count'] = $item['extra']['ratings'][$id];
-                        $item['extra']["totalRatings"] += $rating['count'];
-                        $sortedRatings[$id] = $rating;
+                        if ($rating['count'])
+                        {
+                            $item['extra']["totalRatings"] += $rating['count'];
+                            $sortedRatings[$id] = $rating;
+                        }
                     }
                 }
                 $item['extra']['ratings'] = $sortedRatings;
@@ -104,7 +111,10 @@ abstract class SV_AlertImprovements_Helper
             $item['extra']['likesPhrase'] = array();
             foreach($item['extra']['likes'] as $contentType => $count)
             {
-                $item['extra']['likesPhrase'][$contentType] = new XenForo_Phrase("x_of_{$contentType}s", array('count' => $count));
+                if ($count)
+                {
+                    $item['extra']['likesPhrase'][$contentType] = new XenForo_Phrase("x_of_{$contentType}s", array('count' => $count));
+                }
             }
         }
         return $item;
