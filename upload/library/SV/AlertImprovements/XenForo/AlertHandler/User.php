@@ -11,6 +11,8 @@ class SV_AlertImprovements_XenForo_AlertHandler_User extends XFCP_SV_AlertImprov
     {
         switch($alert['content_type'])
         {
+            case 'profile_post':
+            case 'profile_post_comment':
             case 'report_comment':
             case 'conversation_message':
                 return true;

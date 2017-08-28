@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<addon addon_id="SV_AlertImprovements" title="Alert Improvements" version_string="1.4.6" version_id="1040600" url="https://xenforo.com/community/resources/alert-improvements-by-xon.4578/" install_callback_class="SV_AlertImprovements_Installer" install_callback_method="install" uninstall_callback_class="SV_AlertImprovements_Installer" uninstall_callback_method="uninstall">
+<addon addon_id="SV_AlertImprovements" title="Alert Improvements" version_string="1.4.7" version_id="1040700" url="https://xenforo.com/community/resources/alert-improvements-by-xon.4578/" install_callback_class="SV_AlertImprovements_Installer" install_callback_method="install" uninstall_callback_class="SV_AlertImprovements_Installer" uninstall_callback_method="uninstall">
   <admin_navigation/>
   <admin_permissions/>
   <admin_style_properties/>
@@ -33,6 +33,8 @@ $2
   <code_events/>
   <code_event_listeners>
     <listener event_id="load_class" execute_order="4578" callback_class="SV_AlertImprovements_Listener" callback_method="load_class" active="1" hint="XenForo_AlertHandler_DiscussionMessage_Post" description="XenForo_AlertHandler_DiscussionMessage_Post"/>
+    <listener event_id="load_class" execute_order="4578" callback_class="SV_AlertImprovements_Listener" callback_method="load_class" active="1" hint="XenForo_AlertHandler_DiscussionMessage_ProfilePost" description="XenForo_AlertHandler_DiscussionMessage_ProfilePost"/>
+    <listener event_id="load_class" execute_order="4578" callback_class="SV_AlertImprovements_Listener" callback_method="load_class" active="1" hint="XenForo_AlertHandler_ProfilePostComment" description="XenForo_AlertHandler_ProfilePostComment"/>
     <listener event_id="load_class" execute_order="4578" callback_class="SV_AlertImprovements_Listener" callback_method="load_class" active="1" hint="XenForo_AlertHandler_User" description="XenForo_AlertHandler_User"/>
     <listener event_id="load_class" execute_order="4578" callback_class="SV_AlertImprovements_Listener" callback_method="load_class" active="1" hint="Dark_PostRating_AlertHandler" description="Dark_PostRating_AlertHandler"/>
     <listener event_id="load_class" execute_order="4578" callback_class="SV_AlertImprovements_Listener" callback_method="load_class" active="1" hint="SV_ConversationImprovements_AlertHandler_ConversationMessage" description="SV_ConversationImprovements_AlertHandler_ConversationMessage"/>
@@ -91,11 +93,17 @@ $2
     <phrase title="sv_x_rated_y_content_z_times_with_l_likes" version_id="1040000" version_string="1.4.0"><![CDATA[On <a {link}>{count} of your posts</a>, {name} rated them {ratings}, and liked {likedcontent}]]></phrase>
     <phrase title="x_of_conversation_messages" version_id="1040000" version_string="1.4.0"><![CDATA[{count} of your conversation messages.]]></phrase>
     <phrase title="x_of_posts" version_id="1040000" version_string="1.4.0"><![CDATA[{count} of your posts.]]></phrase>
+    <phrase title="x_of_profile_posts" version_id="1040700" version_string="1.4.7"><![CDATA[{count} of your profile posts.]]></phrase>
+    <phrase title="x_of_profile_post_comments" version_id="1040700" version_string="1.4.7"><![CDATA[{count} of your profile posts.]]></phrase>
     <phrase title="x_of_report_comments" version_id="1040000" version_string="1.4.0"><![CDATA[{count} of your report comments.]]></phrase>
     <phrase title="your_comment_in_the_report_y_has_been_liked_x" version_id="1040000" version_string="1.4.0"><![CDATA[Your comment on the report {title} <a {link}>has been liked</a> {likes} times]]></phrase>
+    <phrase title="your_comment_on_ys_profile_post_has_been_liked_x" version_id="1040700" version_string="1.4.7"><![CDATA[<a {post_attributes}>Your comment</a> on {poster}'s profile post <a {link}>has been liked</a> {likes} times]]></phrase>
     <phrase title="your_message_in_the_conversation_y_has_been_liked_x" version_id="1040000" version_string="1.4.0"><![CDATA[Your message in the conversation {title} <a {link}>has been liked</a> {likes} times]]></phrase>
     <phrase title="your_post_in_the_thread_y_has_been_liked_x" version_id="1040000" version_string="1.4.0"><![CDATA[Your post in the thread {title} <a {link}>has been liked</a> {likes} times]]></phrase>
     <phrase title="your_post_in_the_thread_y_has_been_rated_x" version_id="1040000" version_string="1.4.0"><![CDATA[Your post in the thread {title} <a {link}>has been rated</a> {ratings}]]></phrase>
+    <phrase title="your_post_on_ys_profile_has_been_liked_x" version_id="1040700" version_string="1.4.7"><![CDATA[Your <a {post_attributes}>post</a> on {poster}'s profile <a {link}>has been liked</a> {likes} times]]></phrase>
+    <phrase title="your_profile_comment_has_been_liked_x" version_id="1040700" version_string="1.4.7"><![CDATA[<a {post_attributes}>Your comment</a> on your profile post <a {link}>has been liked</a> {likes} times]]></phrase>
+    <phrase title="your_status_post_has_been_liked_x" version_id="1040700" version_string="1.4.7"><![CDATA[Your <a {status_attributes}>post</a> on your profile, <a {link}>has been liked</a> {likes} times]]></phrase>
   </phrases>
   <route_prefixes/>
   <style_properties/>
@@ -250,6 +258,40 @@ $2
 	'link=href="{xen:link account/alert, '', 'alert_id={$alert_id}'}" class="OverlayTrigger"',
 	'title=<a href="{xen:link posts, $content}" class="PopupItemLink">{xen:helper threadPrefix, $content}{$content.title}</a>'}
 ]]></template>
+    <template title="alert_profile_post_comment_like_summary" version_id="1040700" version_string="1.4.7"><![CDATA[<xen:set var="$likeTotal" value="0" />
+<xen:foreach loop="$extra.likes" key="$contentType" value="$count">
+	<xen:set var="$likeTotal" value="{xen:calc '{$likeTotal}+{$count}'}" />
+</xen:foreach>
+
+<xen:if is="{$visitor.user_id} == {$content.profilePost.user_id}">
+	{xen:phrase your_profile_comment_has_been_liked_x,
+		'likes={$likeTotal}',
+		'link=href="{xen:link account/alert, '', 'alert_id={$alert_id}'}" class="OverlayTrigger"',
+		'post_attributes=href="{xen:link profile-posts/comments, $content}" class="PopupItemLink"'}
+<xen:else />
+	{xen:phrase your_comment_on_ys_profile_post_has_been_liked_x,
+		'likes={$likeTotal}',
+		'link=href="{xen:link account/alert, '', 'alert_id={$alert_id}'}" class="OverlayTrigger"',
+		'post_attributes=href="{xen:link profile-posts/comments, $content}" class="PopupItemLink"',
+		'poster={$content.profilePost.username}'}
+</xen:if>]]></template>
+    <template title="alert_profile_post_like_summary" version_id="1040700" version_string="1.4.7"><![CDATA[<xen:set var="$likeTotal" value="0" />
+<xen:foreach loop="$extra.likes" key="$contentType" value="$count">
+	<xen:set var="$likeTotal" value="{xen:calc '{$likeTotal}+{$count}'}" />
+</xen:foreach>
+
+<xen:if is="{$visitor.user_id} == {$content.profile_user_id}">
+	{xen:phrase your_status_post_has_been_liked_x,
+		'likes={$likeTotal}',
+		'link=href="{xen:link account/alert, '', 'alert_id={$alert_id}'}" class="OverlayTrigger"',
+		'status_attributes=href="{xen:link profile-posts, $content}" class="PopupItemLink"'}
+<xen:else />
+	{xen:phrase your_post_on_ys_profile_has_been_liked_x,
+		'likes={$likeTotal}',
+		'link=href="{xen:link account/alert, '', 'alert_id={$alert_id}'}" class="OverlayTrigger"',
+		'post_attributes=href="{xen:link profile-posts, $content}" class="PopupItemLink"',
+		'profile={$content.profile_username}'}
+</xen:if>]]></template>
     <template title="alert_report_comment_like_summary" version_id="1040101" version_string="1.4.1"><![CDATA[<xen:set var="$likeTotal" value="0" />
 <xen:foreach loop="$extra.likes" key="$contentType" value="$count">
 	<xen:set var="$likeTotal" value="{xen:calc '{$likeTotal}+{$count}'}" />
