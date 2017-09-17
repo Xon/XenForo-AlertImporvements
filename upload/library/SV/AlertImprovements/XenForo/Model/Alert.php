@@ -316,12 +316,18 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
      */
     protected function _getAlertsFromSource($userId, $fetchMode, array $fetchOptions = [])
     {
+        if ($fetchMode == self::FETCH_MODE_POPUP)
+        {
+            $fetchOptions['page'] = 0;
+            $fetchOptions['perPage'] = 25;
+        }
+
         $visitor = XenForo_Visitor::getInstance();
         $viewingUser = $visitor->toArray();
 
         $summarizeThreshold = isset($viewingUser['sv_alerts_summarize_threshold']) ? $viewingUser['sv_alerts_summarize_threshold'] : 4;
         $summarizeUnreadThreshold = $summarizeThreshold * 2 > 25 ? 25 : $summarizeThreshold * 2;
-        $originalLimit = isset($fetchOptions['perPage']) ? $fetchOptions['perPage'] : 0;
+        $originalLimit = isset($fetchOptions['perPage']) ? $fetchOptions['perPage'] : 50;
         $summerizeToken = false;
 
         $summaryAlertViewDate = isset($fetchOptions['ignoreReadState']) ? intval($fetchOptions['summaryAlertTime']) : 0;
@@ -353,11 +359,6 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             // need to replace the entire query...
             //$alerts = parent::_getAlertsFromSource($userId, $fetchMode, $fetchOptions);
             // *********************
-            if ($fetchMode == self::FETCH_MODE_POPUP)
-            {
-                $fetchOptions['page'] = 0;
-                $fetchOptions['perPage'] = $originalLimit = 25;
-            }
 
             $limitOptions = $this->prepareLimitFetchOptions($fetchOptions);
 
@@ -382,7 +383,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
 
             if (!$summerizeToken)
             {
-                return $alerts;
+                return $this->_filterAlertsToLimit($alerts, $originalLimit);
             }
 
             //$oldAlerts = $alerts;
@@ -540,14 +541,12 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                 return ($a['event_date'] < $b['event_date']) ? 1 : -1;
             }
             );
-            $alerts = $this->_filterAlertsToLimit($outputAlerts, $originalLimit);
+            return $this->_filterAlertsToLimit($outputAlerts, $originalLimit);
         }
         finally
         {
             $this->releaseSummarizeLock($summerizeToken);
         }
-
-        return $alerts;
     }
 
     /**
