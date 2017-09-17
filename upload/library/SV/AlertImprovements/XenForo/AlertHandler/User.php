@@ -15,7 +15,6 @@ class SV_AlertImprovements_XenForo_AlertHandler_User extends XFCP_SV_AlertImprov
             case 'profile_post_comment':
             case 'report_comment':
             case 'conversation_message':
-                return true;
             case 'post':
                 return $alert['action'] == 'like';
             case 'postrating':
