@@ -63,7 +63,7 @@ class SV_AlertImprovements_XenForo_ControllerPublic_Thread extends XFCP_SV_Alert
     }
 
     /**
-     * @return XFCP_SV_AlertImprovements_XenForo_Model_Alert|XenForo_Model_Alert|XenForo_Model
+     * @return SV_AlertImprovements_XenForo_Model_Alert|XenForo_Model_Alert|XenForo_Model
      */
     protected function _getAlertModel()
     {

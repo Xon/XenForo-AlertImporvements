@@ -2,12 +2,19 @@
 
 class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements_XenForo_Model_Alert
 {
+    /**
+     * @param int      $userId
+     * @param int|null $time
+     */
     public function markAllAlertsReadForUser($userId, $time = null)
     {
         SV_AlertImprovements_Globals::$markedAlertsRead = true;
         parent::markAllAlertsReadForUser($userId, $time);
     }
 
+    /**
+     * @return string
+     */
     protected function getSummerizeSQL()
     {
         if (SV_AlertImprovements_Globals::$summerizationAlerts)
@@ -27,6 +34,10 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         return '';
     }
 
+    /**
+     * @param int $userId
+     * @return string
+     */
     public function countAlertsForUser($userId)
     {
         $sql = $this->getSummerizeSQL();
@@ -43,6 +54,11 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         // *********************
     }
 
+    /**
+     * @param string $string
+     * @param string $test
+     * @return bool
+     */
     function endswith($string, $test)
     {
         $strlen = strlen($string);
@@ -55,6 +71,9 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         return substr_compare($string, $test, $strlen - $testlen, $testlen) === 0;
     }
 
+    /**
+     * @return XenForo_AlertHandler_Abstract[]
+     */
     public function getAlertHandlers()
     {
         $handlerClasses = $this->getContentTypesWithField('alert_handler_class');
@@ -73,6 +92,19 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         return $handlers;
     }
 
+    /**
+     * @param IConsolidateAlertHandler $handler
+     * @param int                      $summarizeThreshold
+     * @param string                   $contentType
+     * @param int                      $contentId
+     * @param array                    $alertGrouping
+     * @param int                      $grouped
+     * @param array                    $outputAlerts
+     * @param string                   $groupingStyle
+     * @param  int                     $senderUserId
+     * @param  int                     $summaryAlertViewDate
+     * @return bool
+     */
     protected function insertSummaryAlert($handler, $summarizeThreshold, $contentType, $contentId, array $alertGrouping, &$grouped, array &$outputAlerts, $groupingStyle, $senderUserId, $summaryAlertViewDate)
     {
         $grouped = 0;
@@ -134,6 +166,10 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         return true;
     }
 
+    /**
+     * @param int $userId
+     * @param int $summaryId
+     */
     public function insertUnsummarizedAlerts($userId, $summaryId)
     {
         $db = $this->_getDb();
@@ -179,6 +215,10 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         XenForo_Db::commit($db);
     }
 
+    /**
+     * @param int $userId
+     * @return bool
+     */
     protected function getSummarizeLock($userId)
     {
         $db = $this->_getDb();
@@ -191,6 +231,9 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         return false;
     }
 
+    /**
+     * @param int $userId
+     */
     protected function releaseSummarizeLock($userId)
     {
         if ($userId)
@@ -200,6 +243,10 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         }
     }
 
+    /**
+     * @param array $viewingUser
+     * @return XenForo_AlertHandler_Abstract[]|IConsolidateAlertHandler[]
+     */
     public function getAlertHandlersForConsolidation(array $viewingUser)
     {
         $optOuts = $this->getAlertOptOuts($viewingUser);
@@ -207,6 +254,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         unset($handlers['bookmark_post_alt']);
         foreach ($handlers AS $key => $handler)
         {
+            /** @var IConsolidateAlertHandler $handler */
             if (!is_callable([$handler, 'canSummarizeForUser']) ||
                 !is_callable([$handler, 'canSummarizeItem']) ||
                 !is_callable([$handler, 'consolidateAlert']) ||
@@ -220,6 +268,9 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         return $handlers;
     }
 
+    /**
+     * @param int $userId
+     */
     public function summarizeAlertsForUser($userId)
     {
         $db = $this->_getDb();
@@ -257,11 +308,18 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         XenForo_Db::commit($db);
     }
 
+    /**
+     * @param int    $userId
+     * @param string $fetchMode
+     * @param array  $fetchOptions
+     * @return array
+     */
     protected function _getAlertsFromSource($userId, $fetchMode, array $fetchOptions = [])
     {
-        $this->standardizeViewingUserReference($viewingUser);
+        $visitor = XenForo_Visitor::getInstance();
+        $viewingUser = $visitor->toArray();
 
-        $summarizeThreshold = isset($visitor['sv_alerts_summarize_threshold']) ? $visitor['sv_alerts_summarize_threshold'] : 4;
+        $summarizeThreshold = isset($viewingUser['sv_alerts_summarize_threshold']) ? $viewingUser['sv_alerts_summarize_threshold'] : 4;
         $summarizeUnreadThreshold = $summarizeThreshold * 2 > 25 ? 25 : $summarizeThreshold * 2;
         $originalLimit = isset($fetchOptions['perPage']) ? $fetchOptions['perPage'] : 0;
         $summerizeToken = false;
@@ -455,7 +513,6 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             if ($groupedAlerts)
             {
                 $sql = $this->getSummerizeSQL();
-                $visitor = XenForo_Visitor::getInstance();
                 //$visitor['alerts_unread'] = count($outputAlerts);
                 $visitor['alerts_unread'] = $db->fetchOne(
                     "
@@ -493,6 +550,11 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         return $alerts;
     }
 
+    /**
+     * @param array  $alerts
+     * @param string $originalLimit
+     * @return array
+     */
     protected function _filterAlertsToLimit($alerts, $originalLimit)
     {
         // sanity check
@@ -504,6 +566,11 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         return $alerts;
     }
 
+    /**
+     * @param string $contentType
+     * @param array  $contentIds
+     * @throws Zend_Db_Statement_Mysqli_Exception
+     */
     public function markAlertsAsRead($contentType, array $contentIds)
     {
         if (self::PREVENT_MARK_READ || empty($contentIds))
@@ -597,6 +664,12 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         }
     }
 
+    /**
+     * @param int  $userId
+     * @param int  $alertId
+     * @param bool $readStatus
+     * @return array
+     */
     public function changeAlertStatus($userId, $alertId, $readStatus)
     {
         $db = $this->_getDb();
@@ -677,6 +750,12 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         return $alert;
     }
 
+    /**
+     * @param int        $userId
+     * @param array      $alert
+     * @param array|null $viewingUser
+     * @return mixed
+     */
     public function preparedAlertForUser($userId, $alert, array $viewingUser = null)
     {
         $this->standardizeViewingUserReference($viewingUser);

@@ -1,6 +1,6 @@
 <?php
 
-class SV_AlertImprovements_SV_ReportImprovements_AlertHandler_ReportComment extends XFCP_SV_AlertImprovements_SV_ReportImprovements_AlertHandler_ReportComment
+class SV_AlertImprovements_SV_ReportImprovements_AlertHandler_ReportComment extends XFCP_SV_AlertImprovements_SV_ReportImprovements_AlertHandler_ReportComment implements IConsolidateAlertHandler
 {
     public function canSummarizeForUser(array $optOuts, array $viewingUser)
     {

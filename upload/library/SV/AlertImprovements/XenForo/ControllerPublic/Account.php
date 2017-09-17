@@ -8,7 +8,7 @@ class SV_AlertImprovements_XenForo_ControllerPublic_Account extends XFCP_SV_Aler
         if ($options->sv_alerts_summerize)
         {
             $this->assertNotFlooding('alertSummarize', max(1, intval($options->sv_alerts_summerize_flood)));
-            /** @var XFCP_SV_AlertImprovements_XenForo_Model_Alert $alertModel */
+            /** @var SV_AlertImprovements_XenForo_Model_Alert $alertModel */
             $alertModel = $this->_getAlertModel();
             $alertModel->summarizeAlertsForUser(XenForo_Visitor::getUserId());
         }
@@ -58,7 +58,7 @@ class SV_AlertImprovements_XenForo_ControllerPublic_Account extends XFCP_SV_Aler
     public function actionAlert()
     {
         $visitor = XenForo_Visitor::getInstance()->toArray();
-        /** @var XFCP_SV_AlertImprovements_XenForo_Model_Alert $alertModel */
+        /** @var SV_AlertImprovements_XenForo_Model_Alert $alertModel */
         $alertModel = $this->_getAlertModel();
 
         $page = $this->_input->filterSingle('page', XenForo_Input::UINT);
@@ -117,7 +117,7 @@ class SV_AlertImprovements_XenForo_ControllerPublic_Account extends XFCP_SV_Aler
 
     public function actionUnreadAlert()
     {
-        /** @var XFCP_SV_AlertImprovements_XenForo_Model_Alert $alertModel */
+        /** @var SV_AlertImprovements_XenForo_Model_Alert $alertModel */
         $alertModel = $this->_getAlertModel();
         $alertId = $this->_input->filterSingle('alert_id', XenForo_Input::UINT);
 
@@ -135,11 +135,11 @@ class SV_AlertImprovements_XenForo_ControllerPublic_Account extends XFCP_SV_Aler
 
     public function actionUnsummarizeAlert()
     {
-        /** @var XFCP_SV_AlertImprovements_XenForo_Model_Alert $alertModel */
+        /** @var SV_AlertImprovements_XenForo_Model_Alert $alertModel */
         $alertModel = $this->_getAlertModel();
         $summaryId = $this->_input->filterSingle('alert_id', XenForo_Input::UINT);
 
-        $alertModel->insertUnsummarizedAlerts(XenForo_Visitor::getUserId(), $summaryId, false);
+        $alertModel->insertUnsummarizedAlerts(XenForo_Visitor::getUserId(), $summaryId);
 
         $params = array(
             'skip_mark_read' => true,

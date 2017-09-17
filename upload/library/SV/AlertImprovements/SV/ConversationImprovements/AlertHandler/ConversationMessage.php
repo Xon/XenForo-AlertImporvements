@@ -1,6 +1,6 @@
 <?php
 
-class SV_AlertImprovements_SV_ConversationImprovements_AlertHandler_ConversationMessage extends XFCP_SV_AlertImprovements_SV_ConversationImprovements_AlertHandler_ConversationMessage
+class SV_AlertImprovements_SV_ConversationImprovements_AlertHandler_ConversationMessage extends XFCP_SV_AlertImprovements_SV_ConversationImprovements_AlertHandler_ConversationMessage implements IConsolidateAlertHandler
 {
     public function canSummarizeForUser(array $optOuts, array $viewingUser)
     {
