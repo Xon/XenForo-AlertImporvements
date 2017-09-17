@@ -93,7 +93,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
     }
 
     /**
-     * @param IConsolidateAlertHandler $handler
+     * @param SV_AlertImprovements_IConsolidateAlertHandler $handler
      * @param int                      $summarizeThreshold
      * @param string                   $contentType
      * @param int                      $contentId
@@ -245,7 +245,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
 
     /**
      * @param array $viewingUser
-     * @return XenForo_AlertHandler_Abstract[]|IConsolidateAlertHandler[]
+     * @return XenForo_AlertHandler_Abstract[]|SV_AlertImprovements_IConsolidateAlertHandler[]
      */
     public function getAlertHandlersForConsolidation(array $viewingUser)
     {
@@ -254,7 +254,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         unset($handlers['bookmark_post_alt']);
         foreach ($handlers AS $key => $handler)
         {
-            /** @var IConsolidateAlertHandler $handler */
+            /** @var SV_AlertImprovements_IConsolidateAlertHandler $handler */
             if (!is_callable([$handler, 'canSummarizeForUser']) ||
                 !is_callable([$handler, 'canSummarizeItem']) ||
                 !is_callable([$handler, 'consolidateAlert']) ||

@@ -1,6 +1,6 @@
 <?php
 
-class SV_AlertImprovements_Dark_PostRating_AlertHandler extends XFCP_SV_AlertImprovements_Dark_PostRating_AlertHandler implements IConsolidateAlertHandler
+class SV_AlertImprovements_Dark_PostRating_AlertHandler extends XFCP_SV_AlertImprovements_Dark_PostRating_AlertHandler implements SV_AlertImprovements_IConsolidateAlertHandler
 {
     public function canSummarizeForUser(array $optOuts, array $viewingUser)
     {

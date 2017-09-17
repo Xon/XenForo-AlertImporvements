@@ -1,7 +1,7 @@
 <?php
 
 
-interface IConsolidateAlertHandler
+interface SV_AlertImprovements_IConsolidateAlertHandler
 {
     /**
      * @param array $optOuts

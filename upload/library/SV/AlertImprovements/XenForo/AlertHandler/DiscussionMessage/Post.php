@@ -1,6 +1,6 @@
 <?php
 
-class SV_AlertImprovements_XenForo_AlertHandler_DiscussionMessage_Post extends XFCP_SV_AlertImprovements_XenForo_AlertHandler_DiscussionMessage_Post implements IConsolidateAlertHandler
+class SV_AlertImprovements_XenForo_AlertHandler_DiscussionMessage_Post extends XFCP_SV_AlertImprovements_XenForo_AlertHandler_DiscussionMessage_Post implements SV_AlertImprovements_IConsolidateAlertHandler
 {
     public function canSummarizeForUser(array $optOuts, array $viewingUser)
     {
