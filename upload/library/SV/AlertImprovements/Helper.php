@@ -9,7 +9,8 @@ abstract class SV_AlertImprovements_Helper
             $likesByContentType['post'] = 0;
             $min = PHP_INT_MAX;
             $max = -1;
-            foreach($alerts as $alert)
+            $ratingIds = [];
+            foreach ($alerts as $alert)
             {
                 $contentType = $alert['content_type'];
                 if ($alert['action'] == 'like')
@@ -38,14 +39,16 @@ abstract class SV_AlertImprovements_Helper
             {
                 $ratingIds = array_keys($ratingIds);
                 $db = XenForo_Application::getDb();
-                $ratings = $db->fetchAll('
-                    SELECT rating, count(rating) as count
+                $ratings = $db->fetchAll(
+                    '
+                    SELECT rating, count(rating) AS count
                     FROM dark_postrating
-                    where post_id in ('.$db->quote($ratingIds).') and `date` >= ? and `date` <= ?
-                    group by rating
-                ', array($min, $max));
-                $keyedRatings = array();
-                foreach($ratings as $rating)
+                    WHERE post_id IN (' . $db->quote($ratingIds) . ') AND `date` >= ? AND `date` <= ?
+                    GROUP BY rating
+                ', [$min, $max]
+                );
+                $keyedRatings = [];
+                foreach ($ratings as $rating)
                 {
                     $keyedRatings[$rating['rating']] = $rating['count'];
                 }
@@ -66,8 +69,8 @@ abstract class SV_AlertImprovements_Helper
         else
         {
             $summaryAlert['extra_data']['likes']['post'] = count($alerts);
-
         }
+
         return $summaryAlert;
     }
 
@@ -75,7 +78,7 @@ abstract class SV_AlertImprovements_Helper
     {
         if (SV_Utils_AddOn::addOnIsActive('PostRating') && !empty($item['extra']['ratings']))
         {
-            /** @var Dark_PostRating_Model */
+            /** @var Dark_PostRating_Model $ratingModel */
             $ratingModel = XenForo_Model::create('Dark_PostRating_Model');
             $ratings = $ratingModel->getRatings();
 
@@ -86,8 +89,8 @@ abstract class SV_AlertImprovements_Helper
             else if (isset($item['extra']['ratings']))
             {
                 $item['extra']["totalRatings"] = 0;
-                $sortedRatings = array();
-                foreach($ratings as $id => $rating)
+                $sortedRatings = [];
+                foreach ($ratings as $id => $rating)
                 {
                     if (isset($item['extra']['ratings'][$id]))
                     {
@@ -108,15 +111,18 @@ abstract class SV_AlertImprovements_Helper
             //x_of_posts
             //x_of_report_comments
             //x_of_conversation_messages
-            $item['extra']['likesPhrase'] = array();
-            foreach($item['extra']['likes'] as $contentType => $count)
+            $item['extra']['likesPhrase'] = [];
+            foreach ($item['extra']['likes'] as $contentType => $count)
             {
                 if ($count)
                 {
-                    $item['extra']['likesPhrase'][$contentType] = new XenForo_Phrase("x_of_{$contentType}s", array('count' => $count));
+                    $item['extra']['likesPhrase'][$contentType] = new XenForo_Phrase(
+                        "x_of_{$contentType}s", ['count' => $count]
+                    );
                 }
             }
         }
+
         return $item;
     }
 }

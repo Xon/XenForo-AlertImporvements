@@ -14,7 +14,7 @@ class SV_AlertImprovements_XenForo_AlertHandler_ProfilePostComment extends XFCP_
 
     public function consolidateAlert(&$contentType, &$contentId, array $item)
     {
-        switch($contentType)
+        switch ($contentType)
         {
             case 'profile_post_comment':
                 return true;
@@ -40,6 +40,7 @@ class SV_AlertImprovements_XenForo_AlertHandler_ProfilePostComment extends XFCP_
     {
         if (is_callable('parent::_prepareLike_summary'))
         {
+            /** @noinspection PhpUndefinedMethodInspection */
             $item = parent::_prepareLike_summary($item, $viewingUser);
         }
 

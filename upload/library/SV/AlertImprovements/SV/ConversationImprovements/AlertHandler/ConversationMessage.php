@@ -14,7 +14,7 @@ class SV_AlertImprovements_SV_ConversationImprovements_AlertHandler_Conversation
 
     public function consolidateAlert(&$contentType, &$contentId, array $item)
     {
-        switch($contentType)
+        switch ($contentType)
         {
             case 'conversation_message':
                 return true;
@@ -40,6 +40,7 @@ class SV_AlertImprovements_SV_ConversationImprovements_AlertHandler_Conversation
     {
         if (is_callable('parent::_prepareLike_summary'))
         {
+            /** @noinspection PhpUndefinedMethodInspection */
             $item = parent::_prepareLike_summary($item, $viewingUser);
         }
 

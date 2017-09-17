@@ -13,11 +13,12 @@ class SV_AlertImprovements_XenForo_ControllerPublic_Thread extends XFCP_SV_Alert
                 $alertModel = $this->_getAlertModel();
                 $contentIds = XenForo_Application::arrayColumn($response->params['posts'], 'post_id');
                 $contentType = class_exists('Dark_PostRating_Model_Alert', false)
-                               ? array('post','postrating')
-                               : 'post';
+                    ? ['post', 'postrating']
+                    : 'post';
                 $alertModel->markAlertsAsRead($contentType, $contentIds);
             }
         }
+
         return $response;
     }
 
@@ -32,11 +33,12 @@ class SV_AlertImprovements_XenForo_ControllerPublic_Thread extends XFCP_SV_Alert
                 $alertModel = $this->_getAlertModel();
                 $contentIds = XenForo_Application::arrayColumn($response->params['posts'], 'post_id');
                 $contentType = class_exists('Dark_PostRating_Model_Alert', false)
-                               ? array('post','postrating')
-                               : 'post';
+                    ? ['post', 'postrating']
+                    : 'post';
                 $alertModel->markAlertsAsRead($contentType, $contentIds);
             }
         }
+
         return $response;
     }
 
@@ -51,14 +53,18 @@ class SV_AlertImprovements_XenForo_ControllerPublic_Thread extends XFCP_SV_Alert
                 $alertModel = $this->_getAlertModel();
                 $contentIds = XenForo_Application::arrayColumn($response->params['posts'], 'post_id');
                 $contentType = class_exists('Dark_PostRating_Model_Alert', false)
-                               ? array('post','postrating')
-                               : 'post';
+                    ? ['post', 'postrating']
+                    : 'post';
                 $alertModel->markAlertsAsRead($contentType, $contentIds);
             }
         }
+
         return $response;
     }
 
+    /**
+     * @return XFCP_SV_AlertImprovements_XenForo_Model_Alert|XenForo_Model_Alert|XenForo_Model
+     */
     protected function _getAlertModel()
     {
         return $this->getModelFromCache('XenForo_Model_Alert');

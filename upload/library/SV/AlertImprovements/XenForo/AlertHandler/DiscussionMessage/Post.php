@@ -14,7 +14,7 @@ class SV_AlertImprovements_XenForo_AlertHandler_DiscussionMessage_Post extends X
 
     public function consolidateAlert(&$contentType, &$contentId, array $item)
     {
-        switch($contentType)
+        switch ($contentType)
         {
             case 'post':
                 return true;
@@ -32,8 +32,8 @@ class SV_AlertImprovements_XenForo_AlertHandler_DiscussionMessage_Post extends X
 
         $summaryAlert = SV_AlertImprovements_Helper::getSummaryAlertLikeRatings($summaryAlert, $alerts);
         $summaryAlert['action'] = isset($summaryAlert['extra_data']['ratings'])
-                                  ? 'rate_summary'
-                                  : 'like_summary';
+            ? 'rate_summary'
+            : 'like_summary';
 
         return $summaryAlert;
     }
@@ -42,6 +42,7 @@ class SV_AlertImprovements_XenForo_AlertHandler_DiscussionMessage_Post extends X
     {
         if (is_callable('parent::_prepareRate_summary'))
         {
+            /** @noinspection PhpUndefinedMethodInspection */
             $item = parent::_prepareRate_summary($item, $viewingUser);
         }
 
@@ -54,6 +55,7 @@ class SV_AlertImprovements_XenForo_AlertHandler_DiscussionMessage_Post extends X
     {
         if (is_callable('parent::_prepareLike_summary'))
         {
+            /** @noinspection PhpUndefinedMethodInspection */
             $item = parent::_prepareLike_summary($item, $viewingUser);
         }
 

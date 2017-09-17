@@ -14,7 +14,7 @@ class SV_AlertImprovements_SV_ReportImprovements_AlertHandler_ReportComment exte
 
     public function consolidateAlert(&$contentType, &$contentId, array $item)
     {
-        switch($contentType)
+        switch ($contentType)
         {
             case 'report_comment':
                 return true;
@@ -40,6 +40,7 @@ class SV_AlertImprovements_SV_ReportImprovements_AlertHandler_ReportComment exte
     {
         if (is_callable('parent::_prepareLike_summary'))
         {
+            /** @noinspection PhpUndefinedMethodInspection */
             $item = parent::_prepareLike_summary($item, $viewingUser);
         }
 

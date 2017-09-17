@@ -18,22 +18,28 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             }
             else
             {
-                return ' AND summerize_id = ' . $this->_getDb()->quote(SV_AlertImprovements_Globals::$summerizationAlerts).' ';
+                return ' AND summerize_id = ' . $this->_getDb()->quote(
+                        SV_AlertImprovements_Globals::$summerizationAlerts
+                    ) . ' ';
             }
         }
+
         return '';
     }
 
     public function countAlertsForUser($userId)
     {
+        $sql = $this->getSummerizeSQL();
         // need to replace the entire query...
         // *********************
-        return $this->_getDb()->fetchOne('
+        return $this->_getDb()->fetchOne(
+            "
             SELECT COUNT(*)
             FROM xf_user_alert
-            WHERE alerted_user_id = ? '. $this->getSummerizeSQL() .'
+            WHERE alerted_user_id = ? {$sql}
                 AND (view_date = 0 OR view_date > ?)
-        ', array($userId, $this->_getFetchModeDateCut(self::FETCH_MODE_RECENT)));
+        ", [$userId, $this->_getFetchModeDateCut(self::FETCH_MODE_RECENT)]
+        );
         // *********************
     }
 
@@ -41,14 +47,18 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
     {
         $strlen = strlen($string);
         $testlen = strlen($test);
-        if ($testlen > $strlen) return false;
+        if ($testlen > $strlen)
+        {
+            return false;
+        }
+
         return substr_compare($string, $test, $strlen - $testlen, $testlen) === 0;
     }
 
     public function getAlertHandlers()
     {
         $handlerClasses = $this->getContentTypesWithField('alert_handler_class');
-        $handlers = array();
+        $handlers = [];
         foreach ($handlerClasses AS $contentType => $handlerClass)
         {
             if (!$handlerClass || !class_exists($handlerClass))
@@ -73,17 +83,17 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         $lastAlert = reset($alertGrouping);
 
         // inject a grouped alert with the same content type/id, but with a different action
-        $summaryAlert = array(
+        $summaryAlert = [
             'alerted_user_id' => $lastAlert['alerted_user_id'],
-            'user_id' => $senderUserId,
-            'username' => $senderUserId ? $lastAlert['username'] : 'Guest',
-            'content_type' => $contentType,
-            'content_id' => $contentId,
-            'action' => $lastAlert['action'].'_summary',
-            'event_date' => $lastAlert['event_date'],
-            'view_date'  => $summaryAlertViewDate,
-            'extra_data' => array(),
-        );
+            'user_id'         => $senderUserId,
+            'username'        => $senderUserId ? $lastAlert['username'] : 'Guest',
+            'content_type'    => $contentType,
+            'content_id'      => $contentId,
+            'action'          => $lastAlert['action'] . '_summary',
+            'event_date'      => $lastAlert['event_date'],
+            'view_date'       => $summaryAlertViewDate,
+            'extra_data'      => [],
+        ];
         $summaryAlert = $handler->summarizeAlerts($summaryAlert, $alertGrouping, $groupingStyle);
         if (empty($summaryAlert))
         {
@@ -109,15 +119,18 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         }
         // hide the non-summary alerts
         $db = $this->_getDb();
-        $stmt = $db->query('
+        $stmt = $db->query(
+            '
             UPDATE xf_user_alert
             SET summerize_id = ?, view_date = ?
-            WHERE alert_id in (' . $db->quote(XenForo_Application::arrayColumn($alertGrouping, 'alert_id')). ')
-        ', array($summaryAlert['alert_id'], XenForo_Application::$time));
+            WHERE alert_id IN (' . $db->quote(XenForo_Application::arrayColumn($alertGrouping, 'alert_id')) . ')
+        ', [$summaryAlert['alert_id'], XenForo_Application::$time]
+        );
         $rowsAffected = $stmt->rowCount();
         // add to grouping
         $grouped += $rowsAffected;
         $outputAlerts[$summaryAlert['alert_id']] = $summaryAlert;
+
         return true;
     }
 
@@ -132,26 +145,30 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         if (!$dw->setExistingData($summaryAlert, true))
         {
             @XenForo_Db::rollback($db);
+
             return;
         }
         $dw->delete();
 
         // Make alerts visible
-        $db = $this->_getDb();
-        $stmt = $db->query('
+        $stmt = $db->query(
+            '
             UPDATE xf_user_alert
-            SET summerize_id = null, view_date = 0
-            WHERE alerted_user_id = ? and summerize_id = ?
-        ', array($userId, $summaryId));
+            SET summerize_id = NULL, view_date = 0
+            WHERE alerted_user_id = ? AND summerize_id = ?
+        ', [$userId, $summaryId]
+        );
 
         // Reset unread alerts counter
         $increment = $stmt->rowCount();
-        $this->_db->query('
+        $db->query(
+            '
             UPDATE xf_user SET
             alerts_unread = alerts_unread + ?
             WHERE user_id = ?
                 AND alerts_unread < 65535
-        ', array($increment, $userId));
+        ', [$increment, $userId]
+        );
 
         $visitor = XenForo_Visitor::getInstance();
         if ($visitor['user_id'] == $userId)
@@ -166,10 +183,11 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
     {
         $db = $this->_getDb();
         if ($userId &&
-            $db->fetchOne("select get_lock(?, ?)", array('alertSummarize_'.$userId, 0.01)))
+            $db->fetchOne("select get_lock(?, ?)", ['alertSummarize_' . $userId, 0.01]))
         {
             return $userId;
         }
+
         return false;
     }
 
@@ -178,7 +196,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         if ($userId)
         {
             $db = $this->_getDb();
-            $db->fetchOne("select release_lock(?)", array('alertSummarize_'.$userId));
+            $db->fetchOne("select release_lock(?)", ['alertSummarize_' . $userId]);
         }
     }
 
@@ -189,15 +207,16 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         unset($handlers['bookmark_post_alt']);
         foreach ($handlers AS $key => $handler)
         {
-            if (!is_callable(array($handler, 'canSummarizeForUser')) ||
-                !is_callable(array($handler, 'canSummarizeItem')) ||
-                !is_callable(array($handler, 'consolidateAlert')) ||
-                !is_callable(array($handler, 'summarizeAlerts')) ||
+            if (!is_callable([$handler, 'canSummarizeForUser']) ||
+                !is_callable([$handler, 'canSummarizeItem']) ||
+                !is_callable([$handler, 'consolidateAlert']) ||
+                !is_callable([$handler, 'summarizeAlerts']) ||
                 !$handler->canSummarizeForUser($optOuts, $viewingUser))
             {
                 unset($handlers[$key]);
             }
         }
+
         return $handlers;
     }
 
@@ -207,30 +226,38 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         // psot rating summary alerts really can't me merged, so wipe all summary alerts, and then try again
         XenForo_Db::beginTransaction($db);
 
-        $db->query("
-            delete from xf_user_alert
-            where alerted_user_id = ? and summerize_id is null and `action` like '%_summary'
-        ", $userId);
+        $db->query(
+            "
+            DELETE FROM xf_user_alert
+            WHERE alerted_user_id = ? AND summerize_id IS NULL AND `action` LIKE '%_summary'
+        ", $userId
+        );
 
-        $db->query("
-            update xf_user_alert
-            set view_date = 0, summerize_id = null
-            where alerted_user_id = ? and summerize_id is not null
-        ", $userId);
+        $db->query(
+            "
+            UPDATE xf_user_alert
+            SET view_date = 0, summerize_id = NULL
+            WHERE alerted_user_id = ? AND summerize_id IS NOT NULL
+        ", $userId
+        );
 
-        $db->query("
-            update xf_user
-            set alerts_unread = (select count(*) from xf_user_alert where alerted_user_id = xf_user.user_id and view_date = 0)
-            where user_id = ?
-        ", $userId);
+        $db->query(
+            "
+            UPDATE xf_user
+            SET alerts_unread = (SELECT count(*) FROM xf_user_alert WHERE alerted_user_id = xf_user.user_id AND view_date = 0)
+            WHERE user_id = ?
+        ", $userId
+        );
 
-        $fetchOptions = array('forceSummarize' => true, 'ignoreReadState' => true, 'summaryAlertTime' => XenForo_Application::$time);
+        $fetchOptions = [
+            'forceSummarize' => true, 'ignoreReadState' => true, 'summaryAlertTime' => XenForo_Application::$time
+        ];
         $this->_getAlertsFromSource($userId, static::FETCH_MODE_ALL, $fetchOptions);
 
         XenForo_Db::commit($db);
     }
 
-    protected function _getAlertsFromSource($userId, $fetchMode, array $fetchOptions = array())
+    protected function _getAlertsFromSource($userId, $fetchMode, array $fetchOptions = [])
     {
         $this->standardizeViewingUserReference($viewingUser);
 
@@ -276,8 +303,10 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
 
             $limitOptions = $this->prepareLimitFetchOptions($fetchOptions);
 
-            $alerts = $this->fetchAllKeyed($this->limitQueryResults(
-                '
+            $sql = $this->getSummerizeSQL();
+            $alerts = $this->fetchAllKeyed(
+                $this->limitQueryResults(
+                    "
                     SELECT
                         alert.*,
                         user.gender, user.avatar_date, user.gravatar,
@@ -285,11 +314,12 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                     FROM xf_user_alert AS alert
                     LEFT JOIN xf_user AS user ON
                         (user.user_id = alert.user_id)
-                    WHERE alert.alerted_user_id = ? '. $this->getSummerizeSQL() .'
+                    WHERE alert.alerted_user_id = ? {$sql}
                         AND (alert.view_date = 0 OR alert.view_date > ?)
                     ORDER BY event_date DESC
-                ', $limitOptions['limit'], $limitOptions['offset']
-            ), 'alert_id', array($userId, $this->_getFetchModeDateCut($fetchMode)));
+                ", $limitOptions['limit'], $limitOptions['offset']
+                ), 'alert_id', [$userId, $this->_getFetchModeDateCut($fetchMode)]
+            );
             // *********************
 
             if (!$summerizeToken)
@@ -297,8 +327,8 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                 return $alerts;
             }
 
-            $oldAlerts = $alerts;
-            $outputAlerts = array();
+            //$oldAlerts = $alerts;
+            $outputAlerts = [];
             $db = $this->_getDb();
             // build the list of handlers at once, and exclude based
             $handlers = $this->getAlertHandlersForConsolidation($viewingUser);
@@ -310,8 +340,8 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             }
 
             // collect alerts into groupings by content/id
-            $groupedContentAlerts = array();
-            $groupedUserAlerts = array();
+            $groupedContentAlerts = [];
+            $groupedUserAlerts = [];
             $groupedAlerts = false;
             foreach ($alerts AS $id => $item)
             {
@@ -339,7 +369,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                     {
                         if (!isset($groupedUserAlerts[$item['user_id']]))
                         {
-                            $groupedUserAlerts[$item['user_id']] = array('c' => 0, 'd' => array());
+                            $groupedUserAlerts[$item['user_id']] = ['c' => 0, 'd' => []];
                         }
                         $groupedUserAlerts[$item['user_id']]['c'] += 1;
                         $groupedUserAlerts[$item['user_id']]['d'][$contentType][$contentId][$id] = $item;
@@ -358,7 +388,10 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                 $handler = $handlers[$contentType];
                 foreach ($contentIds AS $contentId => $alertGrouping)
                 {
-                    if ($this->insertSummaryAlert($handler, $summarizeThreshold, $contentType, $contentId, $alertGrouping, $grouped, $outputAlerts, 'content', 0, $summaryAlertViewDate))
+                    if ($this->insertSummaryAlert(
+                        $handler, $summarizeThreshold, $contentType, $contentId, $alertGrouping, $grouped,
+                        $outputAlerts, 'content', 0, $summaryAlertViewDate
+                    ))
                     {
                         unset($contentIds[$contentId]);
                         $groupedAlerts = true;
@@ -376,7 +409,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                         continue;
                     }
 
-                    $userAlertGrouping = array();
+                    $userAlertGrouping = [];
                     foreach ($perUserAlerts['d'] AS $contentType => &$contentIds)
                     {
                         foreach ($contentIds AS $contentId => $alertGrouping)
@@ -392,7 +425,10 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
                             }
                         }
                     }
-                    if ($userAlertGrouping && $this->insertSummaryAlert($userHandler, $summarizeThreshold, 'user', $userId, $userAlertGrouping, $grouped, $outputAlerts, 'user', $senderUserId, $summaryAlertViewDate))
+                    if ($userAlertGrouping && $this->insertSummaryAlert(
+                            $userHandler, $summarizeThreshold, 'user', $userId, $userAlertGrouping, $grouped,
+                            $outputAlerts, 'user', $senderUserId, $summaryAlertViewDate
+                        ))
                     {
                         foreach ($userAlertGrouping AS $id => $alert)
                         {
@@ -418,27 +454,35 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
             // update alert totals
             if ($groupedAlerts)
             {
+                $sql = $this->getSummerizeSQL();
                 $visitor = XenForo_Visitor::getInstance();
                 //$visitor['alerts_unread'] = count($outputAlerts);
-                $visitor['alerts_unread'] = $db->fetchOne('
+                $visitor['alerts_unread'] = $db->fetchOne(
+                    "
                     SELECT COUNT(*)
                     FROM xf_user_alert
-                    WHERE alerted_user_id = ? AND view_date = 0 '. $this->getSummerizeSQL() .'
-                ', array($userId));
-                $db->query("
-                    update xf_user
-                    set alerts_unread = ?
-                    where user_id = ?
-                ", array($visitor['alerts_unread'], $userId));
+                    WHERE alerted_user_id = ? AND view_date = 0 {$sql}
+                ", [$userId]
+                );
+                $db->query(
+                    "
+                    UPDATE xf_user
+                    SET alerts_unread = ?
+                    WHERE user_id = ?
+                ", [$visitor['alerts_unread'], $userId]
+                );
             }
 
-            uasort($outputAlerts, function($a, $b) {
+            uasort(
+                $outputAlerts, function ($a, $b) {
                 if ($a['event_date'] == $b['event_date'])
                 {
                     return ($a['alert_id'] < $b['alert_id']) ? 1 : -1;
                 }
+
                 return ($a['event_date'] < $b['event_date']) ? 1 : -1;
-            });
+            }
+            );
             $alerts = $this->_filterAlertsToLimit($outputAlerts, $originalLimit);
         }
         finally
@@ -456,6 +500,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         {
             $alerts = array_slice($alerts, 0, $originalLimit, true);
         }
+
         return $alerts;
     }
 
@@ -470,59 +515,73 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         $userId = $visitor->getUserId();
 
         $db = $this->_getDb();
-        $options = XenForo_Application::getOptions();
         // Do a select first to reduce the amount of rows that can be touched for the update.
         // This hopefully reduces contention as must of the time it should just be a select, without any updates
-        $alertIds = $db->fetchCol("
-            select alert_id
-            from xf_user_alert
-            where alerted_user_id = ? and view_date = 0 and event_date < ? and content_type in(". $db->quote($contentType) .") and content_id in (". $db->quote($contentIds) .")
-        ", array($userId, XenForo_Application::$time));
+        $alertIds = $db->fetchCol(
+            "
+            SELECT alert_id
+            FROM xf_user_alert
+            WHERE alerted_user_id = ? AND view_date = 0 AND event_date < ? AND content_type IN(" . $db->quote(
+                $contentType
+            ) . ") AND content_id IN (" . $db->quote($contentIds) . ")
+        ", [$userId, XenForo_Application::$time]
+        );
         if (empty($alertIds))
         {
             return;
         }
 
-        $stmt = $db->query("
-            update ignore xf_user_alert
-            set view_date = ?
-            where view_date = 0 and alert_id in (". $db->quote($alertIds) .")
-        ", array(XenForo_Application::$time));
+        $stmt = $db->query(
+            "
+            UPDATE IGNORE xf_user_alert
+            SET view_date = ?
+            WHERE view_date = 0 AND alert_id IN (" . $db->quote($alertIds) . ")
+        ", [XenForo_Application::$time]
+        );
         $rowsAffected = $stmt->rowCount();
 
         if ($rowsAffected)
         {
             try
             {
-                $db->query("
-                    update xf_user
-                    set alerts_unread = GREATEST(0, cast(alerts_unread as signed) - ?)
-                    where user_id = ?
-                ", array($rowsAffected, $userId));
+                $db->query(
+                    "
+                    UPDATE xf_user
+                    SET alerts_unread = GREATEST(0, cast(alerts_unread AS SIGNED) - ?)
+                    WHERE user_id = ?
+                ", [$rowsAffected, $userId]
+                );
             }
-            catch(Zend_Db_Statement_Mysqli_Exception $e)
+            catch (Zend_Db_Statement_Mysqli_Exception $e)
             {
                 // something went wrong, recount the alerts and return
-                if (stripos($e->getMessage(), "Deadlock found when trying to get lock; try restarting transaction") !== false)
+                if (stripos(
+                        $e->getMessage(), "Deadlock found when trying to get lock; try restarting transaction"
+                    ) !== false)
                 {
                     if (XenForo_Db::inTransaction($db))
                     {
                         // why the hell are we inside a transaction?
                         XenForo_Error::logException($e, false, 'Unexpected transaction; ');
                         $rowsAffected = 0;
-                        $visitor['alerts_unread'] = $db->fetchOne('
+                        $sql = $this->getSummerizeSQL();
+                        $visitor['alerts_unread'] = $db->fetchOne(
+                            "
                             SELECT COUNT(*)
                             FROM xf_user_alert
-                            WHERE alerted_user_id = ? AND view_date = 0 '. $this->getSummerizeSQL(),
-                        array($userId));
+                            WHERE alerted_user_id = ? AND view_date = 0 {$sql}",
+                            [$userId]
+                        );
                     }
                     else
                     {
-                        $db->query("
-                            update xf_user
-                            set alerts_unread = GREATEST(0, cast(alerts_unread as signed) - ?)
-                            where user_id = ?
-                        ", array($rowsAffected, $userId));
+                        $db->query(
+                            "
+                            UPDATE xf_user
+                            SET alerts_unread = GREATEST(0, cast(alerts_unread AS SIGNED) - ?)
+                            WHERE user_id = ?
+                        ", [$rowsAffected, $userId]
+                        );
                     }
                 }
                 else
@@ -544,45 +603,56 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
 
         XenForo_Db::beginTransaction($db);
 
-        $alert = $db->fetchRow("
+        $alert = $db->fetchRow(
+            "
             SELECT *
             FROM xf_user_alert
-            where alerted_user_id = ? and alert_id = ?
-        ", array($userId, $alertId));
+            WHERE alerted_user_id = ? AND alert_id = ?
+        ", [$userId, $alertId]
+        );
 
         if (empty($alert) || $readStatus == ($alert['view_date'] != 0))
         {
             @XenForo_Db::rollback($db);
+
             return $alert;
         }
 
         if ($readStatus)
         {
-            $db->query("
-                update xf_user
-                set alerts_unread = GREATEST(0, cast(alerts_unread as signed) - 1)
-                where user_id = ?
-            ", $userId);
+            $db->query(
+                "
+                UPDATE xf_user
+                SET alerts_unread = GREATEST(0, cast(alerts_unread AS SIGNED) - 1)
+                WHERE user_id = ?
+            ", $userId
+            );
 
-            $db->query("
-                update xf_user_alert
-                set view_date = ?
-                where alerted_user_id = ? and alert_id = ?
-            ", array(XenForo_Application::$time, $userId, $alertId));
+            $db->query(
+                "
+                UPDATE xf_user_alert
+                SET view_date = ?
+                WHERE alerted_user_id = ? AND alert_id = ?
+            ", [XenForo_Application::$time, $userId, $alertId]
+            );
         }
         else
         {
-            $db->query("
-                update xf_user
-                set alerts_unread = LEAST(alerts_unread + 1, 65535)
-                where user_id = ?
-            ", $userId);
+            $db->query(
+                "
+                UPDATE xf_user
+                SET alerts_unread = LEAST(alerts_unread + 1, 65535)
+                WHERE user_id = ?
+            ", $userId
+            );
 
-            $db->query("
-                update xf_user_alert
-                set view_date = 0
-                where alerted_user_id = ? and alert_id = ?
-            ", array($userId, $alertId));
+            $db->query(
+                "
+                UPDATE xf_user_alert
+                SET view_date = 0
+                WHERE alerted_user_id = ? AND alert_id = ?
+            ", [$userId, $alertId]
+            );
         }
 
         XenForo_Db::commit($db);
@@ -614,7 +684,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         $alert['gender'] = $viewingUser['gender'];
         $alert['avatar_date'] = $viewingUser['avatar_date'];
         $alert['gravatar'] = $viewingUser['gravatar'];
-        $alerts = array($alert);
+        $alerts = [$alert];
 
         $alerts = $this->_getContentForAlerts($alerts, $userId, $viewingUser);
         $alerts = $this->_getViewableAlerts($alerts, $viewingUser);

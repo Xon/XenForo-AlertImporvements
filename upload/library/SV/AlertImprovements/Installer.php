@@ -6,9 +6,15 @@ class SV_AlertImprovements_Installer
     {
         $version = isset($existingAddOn['version_id']) ? $existingAddOn['version_id'] : 0;
 
-        SV_Utils_Install::addColumn('xf_user_option', 'sv_alerts_page_skips_mark_read', 'tinyint(3) unsigned NOT NULL DEFAULT 0');
-        SV_Utils_Install::addColumn('xf_user_option', 'sv_alerts_page_skips_summarize', 'tinyint(3) unsigned NOT NULL DEFAULT 0');
-        SV_Utils_Install::addColumn('xf_user_option', 'sv_alerts_summarize_threshold', 'int(10) unsigned NOT NULL DEFAULT 4');
+        SV_Utils_Install::addColumn(
+            'xf_user_option', 'sv_alerts_page_skips_mark_read', 'tinyint(3) unsigned NOT NULL DEFAULT 0'
+        );
+        SV_Utils_Install::addColumn(
+            'xf_user_option', 'sv_alerts_page_skips_summarize', 'tinyint(3) unsigned NOT NULL DEFAULT 0'
+        );
+        SV_Utils_Install::addColumn(
+            'xf_user_option', 'sv_alerts_summarize_threshold', 'int(10) unsigned NOT NULL DEFAULT 4'
+        );
         SV_Utils_Install::addColumn('xf_user_alert', 'summerize_id', 'int(10) unsigned DEFAULT NULL');
 
         $dw = XenForo_DataWriter::create('XenForo_DataWriter_Option');//, XenForo_DataWriter::ERROR_SILENT);

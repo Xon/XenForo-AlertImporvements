@@ -9,7 +9,7 @@ class SV_AlertImprovements_XenForo_AlertHandler_User extends XFCP_SV_AlertImprov
 
     public function canSummarizeItem(array $alert)
     {
-        switch($alert['content_type'])
+        switch ($alert['content_type'])
         {
             case 'profile_post':
             case 'profile_post_comment':
@@ -37,8 +37,9 @@ class SV_AlertImprovements_XenForo_AlertHandler_User extends XFCP_SV_AlertImprov
         }
         $summaryAlert = SV_AlertImprovements_Helper::getSummaryAlertLikeRatings($summaryAlert, $alerts);
         $summaryAlert['action'] = isset($summaryAlert['extra_data']['ratings'])
-                                  ? 'rate_summary'
-                                  : 'like_summary';
+            ? 'rate_summary'
+            : 'like_summary';
+
         return $summaryAlert;
     }
 
@@ -46,6 +47,7 @@ class SV_AlertImprovements_XenForo_AlertHandler_User extends XFCP_SV_AlertImprov
     {
         if (is_callable('parent::_prepareRate_summary'))
         {
+            /** @noinspection PhpUndefinedMethodInspection */
             $item = parent::_prepareRate_summary($item, $viewingUser);
         }
 
@@ -58,6 +60,7 @@ class SV_AlertImprovements_XenForo_AlertHandler_User extends XFCP_SV_AlertImprov
     {
         if (is_callable('parent::_prepareLike_summary'))
         {
+            /** @noinspection PhpUndefinedMethodInspection */
             $item = parent::_prepareLike_summary($item, $viewingUser);
         }
 

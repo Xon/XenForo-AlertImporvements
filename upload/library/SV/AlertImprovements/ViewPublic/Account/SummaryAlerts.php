@@ -6,7 +6,7 @@ class SV_AlertImprovements_ViewPublic_Account_SummaryAlerts extends XenForo_View
     {
         $alerts = XenForo_ViewPublic_Helper_Alert::getTemplates(
             $this,
-            array($this->_params['summaryAlert']),
+            [$this->_params['summaryAlert']],
             $this->_params['alertHandlers']
         );
         $this->_params['summaryAlert'] = reset($alerts);

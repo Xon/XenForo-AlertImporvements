@@ -13,8 +13,8 @@ class SV_AlertImprovements_XenForo_ControllerPublic_Member extends XFCP_SV_Alert
                 $alertModel = $this->_getAlertModel();
                 $contentIds = XenForo_Application::arrayColumn($response->params['profilePosts'], 'profile_post_id');
                 $alertModel->markAlertsAsRead('profile_post', $contentIds);
-                $contentIds = array();
-                foreach($response->params['profilePosts'] as $profilePost)
+                $contentIds = [];
+                foreach ($response->params['profilePosts'] as $profilePost)
                 {
                     if (empty($profilePost['comments']))
                     {
@@ -31,9 +31,13 @@ class SV_AlertImprovements_XenForo_ControllerPublic_Member extends XFCP_SV_Alert
                 }
             }
         }
+
         return $response;
     }
 
+    /**
+     * @return XFCP_SV_AlertImprovements_XenForo_Model_Alert|XenForo_Model_Alert|XenForo_Model
+     */
     protected function _getAlertModel()
     {
         return $this->getModelFromCache('XenForo_Model_Alert');

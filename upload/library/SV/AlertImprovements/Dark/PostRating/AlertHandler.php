@@ -14,10 +14,11 @@ class SV_AlertImprovements_Dark_PostRating_AlertHandler extends XFCP_SV_AlertImp
 
     public function consolidateAlert(&$contentType, &$contentId, array $item)
     {
-        switch($contentType)
+        switch ($contentType)
         {
             case 'postrating':
                 $contentType = 'post';
+
                 return true;
             default:
                 return false;

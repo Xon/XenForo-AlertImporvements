@@ -5,8 +5,8 @@
 class SV_AlertImprovements_Globals
 {
     public static $summerizationAlerts = true;
-    public static $markedAlertsRead = false;
-    public static $skipSummarize = false;
+    public static $markedAlertsRead    = false;
+    public static $skipSummarize       = false;
 
-    private function __construct() {}
+    private function __construct() { }
 }
