@@ -49,6 +49,7 @@ $2
     <listener event_id="load_class" execute_order="4578" callback_class="SV_AlertImprovements_Listener" callback_method="load_class" active="1" hint="XenForo_Model_Alert" description="XenForo_Model_Alert"/>
     <listener event_id="load_class" execute_order="4578" callback_class="SV_AlertImprovements_Listener" callback_method="load_class" active="1" hint="NixFifty_Tickets_ControllerPublic_Ticket" description="NixFifty_Tickets_ControllerPublic_Ticket"/>
     <listener event_id="load_class" execute_order="4578" callback_class="SV_AlertImprovements_Listener" callback_method="load_class" active="1" hint="XenProduct_ControllerPublic_Product" description="XenProduct_ControllerPublic_Product"/>
+    <listener event_id="load_class" execute_order="4578" callback_class="SV_AlertImprovements_Listener" callback_method="load_class" active="1" hint="XenProduct_ControllerPublic_License" description="XenProduct_ControllerPublic_License"/>
   </code_event_listeners>
   <cron/>
   <email_templates/>
