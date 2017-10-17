@@ -29,7 +29,7 @@ class SV_AlertImprovements_XenProduct_ControllerPublic_License extends XFCP_SV_A
             if ($visitor->getUserId() && $visitor->alerts_unread)
             {
                 $alertModel = $this->_getAlertModel();
-                $versions = $this->_getVersionModel()->getVersionsForLicense($license);
+                $versions = $this->_getVersionModel()->getVersionsForLicense($response->params['license']);
                 $contentIds = XenForo_Application::arrayColumn($versions, 'product_version_id');
                 $contentType = 'xenproduct_version';
                 $alertModel->markAlertsAsRead($contentType, $contentIds);
