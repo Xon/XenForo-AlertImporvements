@@ -12,8 +12,8 @@ class SV_AlertImprovements_XenForo_ControllerPublic_Conversation extends XFCP_SV
             {
                 $contentIds = XenForo_Application::arrayColumn($response->params['messages'], 'message_id');
                 $this->_getAlertModel()->markAlertsAsRead('conversation_message', $contentIds);
-                $contentId = $response->params['conversation']['conversation_id'];
-                $this->_getAlertModel()->markAlertsAsRead('conversation', $contentId);
+                $contentIds = [$response->params['conversation']['conversation_id']];
+                $this->_getAlertModel()->markAlertsAsRead('conversation', [$contentIds]);
             }
         }
 
