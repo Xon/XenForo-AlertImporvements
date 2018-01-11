@@ -14,6 +14,9 @@ class SV_AlertImprovements_NixFifty_Tickets_ControllerPublic_Ticket extends XFCP
                 $contentIds = XenForo_Application::arrayColumn($response->params['messages'], 'message_id');
                 $contentType = 'ticket_message';
                 $alertModel->markAlertsAsRead($contentType, $contentIds);
+                $contentIds = $response->params['ticket']['ticket_id'];
+                $contentType = 'ticket';
+                $alertModel->markAlertsAsRead($contentType, $contentIds);
             }
         }
 
