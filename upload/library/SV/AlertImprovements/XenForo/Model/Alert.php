@@ -154,7 +154,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         $stmt = $db->query(
             '
             UPDATE xf_user_alert
-            SET summerize_id = ?, view_date = ?
+            SET summerize_id = ?, view_date = if(view_date = 0, ?, view_date)
             WHERE alert_id IN (' . $db->quote(XenForo_Application::arrayColumn($alertGrouping, 'alert_id')) . ')
         ', [$summaryAlert['alert_id'], XenForo_Application::$time]
         );
