@@ -274,7 +274,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
     public function summarizeAlertsForUser($userId)
     {
         $db = $this->_getDb();
-        // psot rating summary alerts really can't me merged, so wipe all summary alerts, and then try again
+        // post rating summary alerts really can't me merged, so wipe all summary alerts, and then try again
         XenForo_Db::beginTransaction($db);
 
         $db->query(
@@ -287,7 +287,7 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         $db->query(
             "
             UPDATE xf_user_alert
-            SET view_date = 0, summerize_id = NULL
+            SET summerize_id = NULL
             WHERE alerted_user_id = ? AND summerize_id IS NOT NULL
         ", $userId
         );
