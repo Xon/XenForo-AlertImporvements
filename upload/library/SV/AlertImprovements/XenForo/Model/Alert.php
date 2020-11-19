@@ -177,6 +177,10 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
 
         // Delete summary alert
         $summaryAlert = $this->getAlertById($summaryId);
+        if (!$userId || !$summaryAlert || $summaryAlert['alerted_user_id'] != $userId)
+        {
+            return;
+        }
         $dw = XenForo_DataWriter::create('XenForo_DataWriter_Alert', XenForo_DataWriter::ERROR_SILENT);
         if (!$dw->setExistingData($summaryAlert, true))
         {
