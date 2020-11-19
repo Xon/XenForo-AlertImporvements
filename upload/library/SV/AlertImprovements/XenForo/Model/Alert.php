@@ -181,6 +181,10 @@ class SV_AlertImprovements_XenForo_Model_Alert extends XFCP_SV_AlertImprovements
         {
             return;
         }
+        if (!empty($summaryAlert['summerize_id']) || !(bool)preg_match('/^.*_summary$/', $summaryAlert['action']))
+        {
+            return;
+        }
         $dw = XenForo_DataWriter::create('XenForo_DataWriter_Alert', XenForo_DataWriter::ERROR_SILENT);
         if (!$dw->setExistingData($summaryAlert, true))
         {
